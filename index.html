@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coockie AI 🍪</title>
+<title>Coockie AI</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 <style>
@@ -41,6 +44,7 @@
   .chat-item.active { background: var(--bg-main); color: var(--text); font-weight: 500; }
   .chat-item .delete-chat { margin-left: auto; opacity: 0.3; cursor: pointer; font-size: 11px; padding: 0 3px; flex-shrink: 0; }
   .chat-item:hover .delete-chat { opacity: 0.8; }
+
   #backup-buttons { padding: 6px 8px; border-top: 0.5px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; }
   #backup-buttons button { padding: 4px 8px; font-size: 10px; border: 0.5px solid var(--border-md); border-radius: 5px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
   #backup-buttons button:hover { background: var(--bg-main); color: var(--text); border-color: var(--brown); }
@@ -48,8 +52,35 @@
   #backup-buttons .import-btn input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-main); }
-  #topbar { padding: 8px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  #topbar { padding: 8px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   #topbar-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #topbar-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; }
+  .top-link { color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s; font-size: 11px; }
+  .top-link:hover { color: var(--brown); }
+  .top-divider { color: var(--border); font-size: 8px; }
+
+  .lang-select {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 2px 4px;
+    outline: none;
+    font-family: inherit;
+  }
+  .lang-select:hover { color: var(--text); }
+  .lang-select option { background: var(--bg-main); color: var(--text); font-size: 14px; }
+
+  .donate-btn {
+    display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px;
+    background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a18;
+    border-radius: 20px; font-weight: 600; font-size: 11px; text-decoration: none;
+    transition: all 0.25s ease; border: none; cursor: pointer;
+    box-shadow: 0 2px 8px rgba(247, 151, 30, 0.25);
+  }
+  .donate-btn:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(247, 151, 30, 0.4); }
+  .donate-btn i { font-size: 14px; }
 
   #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
   #messages::-webkit-scrollbar { width: 4px; }
@@ -58,7 +89,6 @@
   .welcome { margin: auto; text-align: center; padding: 16px; max-width: 380px; }
   .welcome h2 { font-size: 18px; font-weight: 600; color: var(--text); margin: 8px 0 4px; }
   .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-  .free-badge { display: inline-block; margin-top: 8px; padding: 3px 10px; background: #dcfce7; color: #166534; border-radius: 16px; font-size: 11px; font-weight: 500; }
 
   .msg { display: flex; gap: 8px; }
   .msg.user { flex-direction: row-reverse; }
@@ -70,12 +100,13 @@
   .msg.user .bubble { background: var(--brown); color: #fdf6ec; border-radius: 12px 4px 12px 12px; }
 
   .code-block { margin: 6px 0; border-radius: 6px; overflow: hidden; border: 0.5px solid var(--border-md); }
-  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(0,0,0,0.06); font-size: 10px; color: var(--text-muted); }
-  .code-header .lang { font-weight: 500; }
+  .code-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(0,0,0,0.08); font-size: 10px; color: var(--text-muted); }
+  .code-header .lang { font-weight: 600; }
   .code-actions { display: flex; gap: 3px; }
   .code-actions button { padding: 1px 6px; font-size: 10px; border: 0.5px solid var(--border-md); border-radius: 3px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 2px; }
   .code-actions button:hover { background: var(--bg-main); color: var(--text); }
-  .code-block pre { margin: 0; padding: 10px; background: rgba(0,0,0,0.03); overflow-x: auto; font-size: 12px; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.4; }
+  .code-block pre { margin: 0; padding: 10px; background: #0d1117; overflow-x: auto; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.5; }
+  .code-block pre code { font-family: inherit; }
   .msg.ai .bubble code:not(.code-block code) { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: monospace; }
   .msg.user .bubble code { background: rgba(255,255,255,0.15); padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: monospace; }
 
@@ -123,23 +154,44 @@
       </svg>
       <div id="logo-text">Cooc<em>kie</em></div>
     </div>
-    <button id="new-chat-btn"><i class="ti ti-plus" aria-hidden="true"></i>Новий чат</button>
-    <div id="chats-label">Чати</div>
+    <button id="new-chat-btn" data-i18n="new_chat"><i class="ti ti-plus" aria-hidden="true"></i> <span>Новий чат</span></button>
+    <div id="chats-label" data-i18n="chats">Чати</div>
     <div id="chat-list"></div>
     <div id="backup-buttons">
-      <button id="export-btn"><i class="ti ti-download"></i></button>
-      <button class="import-btn"><i class="ti ti-upload"></i> <input type="file" id="import-file" accept=".zip"></button>
+      <button id="export-btn" data-i18n="export"><i class="ti ti-download"></i></button>
+      <button class="import-btn" data-i18n="import"><i class="ti ti-upload"></i> <input type="file" id="import-file" accept=".zip"></button>
     </div>
   </div>
 
   <div id="main">
     <div id="topbar">
-      <div id="topbar-title">Новий чат</div>
+      <div id="topbar-title" data-i18n="new_chat">Новий чат</div>
+      <div id="topbar-links">
+        <select id="lang-select" class="lang-select">
+          <option value="uk" data-flag="🇺🇦">🇺🇦</option>
+          <option value="en" data-flag="🇬🇧">🇬🇧</option>
+          <option value="pl" data-flag="🇵🇱">🇵🇱</option>
+          <option value="de" data-flag="🇩🇪">🇩🇪</option>
+          <option value="fr" data-flag="🇫🇷">🇫🇷</option>
+          <option value="es" data-flag="🇪🇸">🇪🇸</option>
+          <option value="jp" data-flag="🇯🇵">🇯🇵</option>
+          <option value="zh" data-flag="🇨🇳">🇨🇳</option>
+          <option value="ar" data-flag="🇸🇦">🇸🇦</option>
+        </select>
+        <span class="top-divider">|</span>
+        <a href="https://groq.com" target="_blank" class="top-link"><i class="ti ti-key"></i> Groq</a>
+        <span class="top-divider">|</span>
+        <a href="https://pollinations.ai" target="_blank" class="top-link"><i class="ti ti-photo"></i> Pollinations</a>
+        <span class="top-divider">|</span>
+        <a href="https://github.com/snakeofskr1pt-afk" target="_blank" class="top-link"><i class="ti ti-brand-github"></i> GitHub</a>
+        <span class="top-divider">|</span>
+        <a href="#" class="donate-btn" id="donate-btn" data-i18n="support"><i class="ti ti-coins"></i> <span>Підтримати</span></a>
+      </div>
     </div>
     <div id="messages"></div>
     <div id="input-area">
       <div id="input-row">
-        <textarea id="text-input" placeholder="Напиши щось... (Enter — надіслати)" rows="1"></textarea>
+        <textarea id="text-input" placeholder="Напиши запит або код..." rows="1" data-i18n-placeholder="input_placeholder"></textarea>
         <button id="send-btn"><i class="ti ti-arrow-up" style="font-size:16px;"></i></button>
       </div>
     </div>
@@ -148,6 +200,182 @@
 <div id="toast" class="toast"></div>
 
 <script>
+// ============================================================
+// 0. ЛОКАЛІЗАЦІЯ
+// ============================================================
+const translations = {
+  uk: {
+    new_chat: 'Новий чат',
+    chats: 'Чати',
+    export: 'Експорт',
+    import: 'Імпорт',
+    support: 'Підтримати',
+    input_placeholder: 'Напиши запит або код...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Пиши код, запитуй, розбирай — будь-якою мовою.',
+    donate_title: '🍪 Підтримати Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Мову змінено на {lang}'
+  },
+  en: {
+    new_chat: 'New chat',
+    chats: 'Chats',
+    export: 'Export',
+    import: 'Import',
+    support: 'Support',
+    input_placeholder: 'Write a query or code...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Write code, ask, explore — in any language.',
+    donate_title: '🍪 Support Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Language changed to {lang}'
+  },
+  pl: {
+    new_chat: 'Nowy czat',
+    chats: 'Czaty',
+    export: 'Eksport',
+    import: 'Import',
+    support: 'Wsparcie',
+    input_placeholder: 'Napisz zapytanie lub kod...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Pisz kod, pytaj, analizuj — w każdym języku.',
+    donate_title: '🍪 Wsparcie Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Język zmieniony na {lang}'
+  },
+  de: {
+    new_chat: 'Neuer Chat',
+    chats: 'Chats',
+    export: 'Export',
+    import: 'Import',
+    support: 'Unterstützen',
+    input_placeholder: 'Schreibe eine Anfrage oder Code...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Code schreiben, fragen, analysieren — in jeder Sprache.',
+    donate_title: '🍪 Coockie AI unterstützen',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Sprache auf {lang} geändert'
+  },
+  fr: {
+    new_chat: 'Nouveau chat',
+    chats: 'Chats',
+    export: 'Exporter',
+    import: 'Importer',
+    support: 'Soutenir',
+    input_placeholder: 'Écris une requête ou du code...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Écris du code, pose des questions, explore — dans toutes les langues.',
+    donate_title: '🍪 Soutenir Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Langue changée en {lang}'
+  },
+  es: {
+    new_chat: 'Nuevo chat',
+    chats: 'Chats',
+    export: 'Exportar',
+    import: 'Importar',
+    support: 'Apoyar',
+    input_placeholder: 'Escribe una consulta o código...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'Escribe código, pregunta, explora — en cualquier idioma.',
+    donate_title: '🍪 Apoyar Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Idioma cambiado a {lang}'
+  },
+  jp: {
+    new_chat: '新しいチャット',
+    chats: 'チャット',
+    export: 'エクスポート',
+    import: 'インポート',
+    support: 'サポート',
+    input_placeholder: '質問やコードを入力...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'コードを書き、質問し、あらゆる言語で探索できます。',
+    donate_title: '🍪 Coockie AIをサポート',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: '言語を{lang}に変更しました'
+  },
+  zh: {
+    new_chat: '新聊天',
+    chats: '聊天',
+    export: '导出',
+    import: '导入',
+    support: '支持',
+    input_placeholder: '输入查询或代码...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: '编写代码、提问、探索——任意语言。',
+    donate_title: '🍪 支持 Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: '语言已切换为 {lang}'
+  },
+  ar: {
+    new_chat: 'محادثة جديدة',
+    chats: 'المحادثات',
+    export: 'تصدير',
+    import: 'استيراد',
+    support: 'دعم',
+    input_placeholder: 'اكتب سؤالاً أو كود...',
+    welcome_title: '🍪 Coockie',
+    welcome_desc: 'اكتب الكود، اسأل، استكشف — بأي لغة.',
+    donate_title: '🍪 دعم Coockie AI',
+    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'تم تغيير اللغة إلى {lang}'
+  }
+};
+
+let currentLang = localStorage.getItem('coockie_interface_lang') || 'uk';
+
+function getLangName(code) {
+  const names = { uk: 'українську', en: 'English', pl: 'polski', de: 'Deutsch', fr: 'français', es: 'español', jp: '日本語', zh: '中文', ar: 'العربية' };
+  return names[code] || code;
+}
+
+function applyTranslations(lang) {
+  const t = translations[lang] || translations.uk;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (t[key]) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+        el.placeholder = t[key];
+      } else {
+        // Шукаємо span всередині або просто замінюємо текст
+        const span = el.querySelector('span');
+        if (span) {
+          span.textContent = t[key];
+        } else {
+          el.textContent = t[key];
+        }
+      }
+    }
+  });
+
+  // Оновлюємо placeholder для textarea
+  const input = document.getElementById('text-input');
+  if (input && t.input_placeholder) {
+    input.placeholder = t.input_placeholder;
+  }
+
+  // Оновлюємо welcome-повідомлення
+  const welcome = document.querySelector('.welcome');
+  if (welcome) {
+    const title = welcome.querySelector('h2');
+    const desc = welcome.querySelector('p');
+    if (title) title.textContent = t.welcome_title;
+    if (desc) desc.textContent = t.welcome_desc;
+  }
+
+  // Зберігаємо мову
+  localStorage.setItem('coockie_interface_lang', lang);
+  currentLang = lang;
+}
+
+// Обробник зміни мови
+document.getElementById('lang-select')?.addEventListener('change', function() {
+  const lang = this.value;
+  applyTranslations(lang);
+  showToast(translations[lang].language_switched.replace('{lang}', getLangName(lang)));
+});
+
 // ============================================================
 // 1. ВБУДОВАНИЙ API КЛЮЧ
 // ============================================================
@@ -159,7 +387,6 @@ const apiKey = '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';
 
 function fixBrokenUnicode(text) {
   if (!text) return text;
-  
   const fixes = {
     'Ð': 'Є', 'Ñ': 'Ї',
     'Ð²': 'в', 'Ð³': 'г', 'Ð´': 'д', 'Ðµ': 'е', 'Ð¶': 'ж',
@@ -179,13 +406,10 @@ function fixBrokenUnicode(text) {
     'Ñ': 'ч', 'Ñ': 'ш', 'Ñ': 'щ', 'Ñ': 'ъ', 'Ñ': 'ы',
     'Ñ': 'ь', 'Ñ': 'э', 'Ñ': 'ю', 'Ñ': 'я'
   };
-  
   try { text = text.normalize('NFC'); } catch(e) {}
-  
   for (const [bad, good] of Object.entries(fixes)) {
     text = text.replace(new RegExp(bad, 'g'), good);
   }
-  
   return text;
 }
 
@@ -201,11 +425,9 @@ function sanitizeText(text) {
 // ============================================================
 
 const WARNING_MESSAGES_UK = [
-  "⚠️ Я відповідаю українською, але я зрозумів твоє запитання. Ось моя відповідь:",
-  "⚠️ Я не спілкуюся російською, але я зрозумів, що ти хочеш запитати. Ось відповідь українською:",
-  "⚠️ Вибач, але я не відповідаю російською. Проте я зрозумів твій запит. Ось моя відповідь:",
-  "⚠️ Я не розмовляю російською, але я зрозумів суть питання. Відповідаю українською:",
-  "⚠️ Російська — не моя мова, але я зрозумів запит. Ось моя відповідь українською:"
+  "⚠️ Я відповідаю українською. Ось моя відповідь:",
+  "⚠️ Я не спілкуюся російською. Відповідаю українською:",
+  "⚠️ Я не розмовляю російською. Відповідаю українською:"
 ];
 
 function getRandomWarning() {
@@ -215,46 +437,30 @@ function getRandomWarning() {
 function detectLanguage(text) {
   text = sanitizeText(text);
   if (!text) return 'en';
-  
   const ukrLetters = /[іїєґ]/i;
   const rusOnlyLetters = /[ёыъэ]/i;
   const cyrillic = /[а-яёіїєґ]/i;
-  
-  const ukrBaseWords = ['привіт', 'добрий', 'день', 'вечір', 'ранок', 'дякую', 
-    'спасибі', 'будь', 'ласка', 'вибач', 'пробач', 'допоможи', 'скажи', 
-    'розкажи', 'поясни', 'напиши', 'зроби', 'так', 'ні', 'можна', 'треба',
-    'потрібно', 'гарно', 'добре', 'погано', 'цікаво', 'супер', 'круто',
-    'ноу', 'йоу', 'окей', 'ок', 'вау', 'гоу', 'хай', 'хей', 'йєс'];
-  
-  const rusBaseWords = ['привет', 'добрый', 'день', 'вечер', 'утро', 'спасибо', 
-    'пожалуйста', 'извини', 'прости', 'помоги', 'скажи', 'расскажи', 
-    'объясни', 'напиши', 'сделай', 'да', 'нет', 'можно', 'нужно',
-    'надо', 'хорошо', 'плохо', 'интересно', 'супер', 'круто'];
-  
+  const ukrBaseWords = ['привіт', 'добрий', 'дякую', 'спасибі', 'будь', 'ласка', 'вибач', 'допоможи', 'скажи', 'розкажи', 'поясни', 'напиши', 'зроби'];
+  const rusBaseWords = ['привет', 'добрый', 'спасибо', 'пожалуйста', 'извини', 'помоги', 'скажи', 'расскажи', 'объясни', 'напиши', 'сделай'];
   let ukrScore = 0, rusScore = 0;
   let hasUkrLetters = false, hasRusOnlyLetters = false;
-  
   for (const char of text) {
     if (ukrLetters.test(char)) { hasUkrLetters = true; ukrScore += 2; }
     if (rusOnlyLetters.test(char)) { hasRusOnlyLetters = true; rusScore += 2; }
   }
-  
   const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
   for (const word of words) {
     if (ukrBaseWords.some(w => word.includes(w))) ukrScore += 1.5;
     if (rusBaseWords.some(w => word.includes(w))) rusScore += 1.5;
   }
-  
   if (hasUkrLetters) return 'uk';
   if (hasRusOnlyLetters && !hasUkrLetters) return 'ru';
   if (ukrScore > rusScore && ukrScore > 0) return 'uk';
   if (rusScore > ukrScore && rusScore > 0) return 'ru';
-  
   if (cyrillic.test(text)) {
-    if (/[а-я]и$/i.test(text) || /[а-я]ю$/i.test(text) || /[а-я]о$/i.test(text)) return 'uk';
+    if (/[а-я]и$/i.test(text) || /[а-я]ю$/i.test(text)) return 'uk';
     if (/[а-я]ы$/i.test(text) || /[а-я]е$/i.test(text)) return 'ru';
   }
-  
   if (/[a-zA-Z]/.test(text)) return 'en';
   return 'en';
 }
@@ -269,21 +475,18 @@ function isRussian(text) {
 
 function getSystemPromptForLanguage(langCode) {
   const prompts = {
-    uk: 'Ти Coockie — розумний, дружній ШІ-асистент. Відповідай ВИКЛЮЧНО українською мовою. Будь творчим, використовуй різні фрази та підходи у відповідях, не повторюй одні й ті ж вирази.',
-    pl: 'Jesteś Coockie — inteligentnym, przyjaznym asystentem AI. Odpowiadaj WYŁĄCZNIE po polsku. Bądź kreatywny, używaj różnych zwrotów w odpowiedziach, nie powtarzaj tych samych wyrażeń.',
-    de: 'Du bist Coockie — ein intelligenter, freundlicher KI-Assistent. Antworte AUSSCHLIESSLICH auf Deutsch. Sei kreativ, verwende verschiedene Formulierungen, wiederhole nicht die gleichen Ausdrücke.',
-    fr: 'Tu es Coockie — un assistant IA intelligent et amical. Réponds EXCLUSIVEMENT en français. Sois créatif, utilise différentes phrases, ne répète pas les mêmes expressions.',
-    es: 'Eres Coockie — un asistente de IA inteligente y amigable. Responde EXCLUSIVAMENTE en español. Sé creativo, usa diferentes frases, no repitas las mismas expresiones.',
-    en: 'You are Coockie — a smart, friendly AI assistant. Answer EXCLUSIVELY in English. Be creative, use different phrasing in your responses, don\'t repeat the same expressions.',
-    jp: 'あなたはCoockie — 賢くてフレンドリーなAIアシスタントです。日本語でEXCLUSIVELY答えてください。創造的で、さまざまな表現を使ってください。同じ表現を繰り返さないでください。',
-    zh: '你是Coockie — 一个聪明友好的AI助手。请EXCLUSIVELY用中文回答。要有创意，在回答中使用不同的表达方式，不要重复相同的表达。',
-    ar: 'أنت Coockie — مساعد ذكي وودود. أجب EXCLUSIVELY باللغة العربية. كن مبدعًا، استخدم تعبيرات مختلفة في ردودك، لا تكرر نفس التعبيرات.'
+    uk: 'Відповідай українською.',
+    pl: 'Odpowiadaj po polsku.',
+    de: 'Antworte auf Deutsch.',
+    fr: 'Réponds en français.',
+    es: 'Responde en español.',
+    en: 'Answer in English.'
   };
   return prompts[langCode] || prompts.en;
 }
 
 // ============================================================
-// 4. ПОШУК: DUCKDUCKGO + QWANT
+// 4. ПОШУК
 // ============================================================
 
 const searchCache = new Map();
@@ -337,17 +540,12 @@ async function searchQwant(query) {
     }
     searchCache.set(cacheKey, { data: results, timestamp: Date.now() });
     return results;
-  } catch (e) {
-    console.warn('Qwant search failed:', e);
-    return [];
-  }
+  } catch (e) { return []; }
 }
 
 async function searchWeb(query) {
   let results = await searchDuckDuckGo(query);
-  
   if (!results || results.length < 3) {
-    console.log('🔄 DDG мало результатів, пробуємо Qwant...');
     const qwantResults = await searchQwant(query);
     const seen = new Set();
     const combined = [...results, ...qwantResults];
@@ -359,70 +557,28 @@ async function searchWeb(query) {
     });
     results = unique;
   }
-  
-  const source = results.length > 0 && results.some(r => r.url && !r.url.startsWith('#'));
-  if (source) {
-    console.log(`🔍 Знайдено ${results.length} результатів (DDG + Qwant)`);
-  }
-  
   return results;
 }
 
 function needsInternetSearch(query) {
   const patterns = [
     /сьогодн/i, /зараз/i, /новин/i, /актуальн/i, /останн/i,
-    /поточн/i, /свіж/i, /найсвіжіш/i, /тільки\s+що/i,
-    /цього\s+року/i, /цього\s+місяця/i, /цього\s+тижня/i,
-    /202[4-9]/i,
-    /погод/i, /курс\s+(валюти|долару|євро|гривні)/i, /долар/i,
-    /що\s+(сталося|відбувається|трапилося|стало)/i,
-    /новий\s+реліз/i, /вийшов/i, /з\'явився/i,
-    /оновлен/i, /версія\s+\d/i,
-    /знайди/i, /пошук/i, /перевір/i, /дізнайся/i,
-    /розкажи\s+про\s+остан/i, /що\s+там\s+з/i,
-    /війна\s+в\s+україн/i, /зсу/i, /фронт/i,
-    /політик/i, /вибори/i,
-    /економік/i, /цін/i,
-    /технологі/i, /гаджет/i, /айфон/i, /телефон/i,
-    /наука/i, /досліджен/i,
-    /спорт/i, /футбол/i, /чемпіонат/i,
-    /культур/i, /кіно/i, /музик/i,
-    /здоров/i, /ковід/i, /коронавірус/i,
-    /клімат/i, /еколог/i,
-    /космос/i, /супутник/i,
-    /україн/i, /київ/i, /львів/i, /одес/i, /харків/i,
-    /світ/i, /європ/i, /америк/i, /китай/i,
-    /тікток/i, /інстаграм/i, /фейсбук/i, /ютуб/i, /твіттер/i,
-    /мем/i, /вірусн/i,
-    /що\s+нов/i, /що\s+там/i, /як\s+справ/i,
-    /чи\s+(є|був|була|було)/i
+    /поточн/i, /свіж/i, /202[4-9]/i, /погод/i, /курс\s+(валюти|долару)/i,
+    /знайди/i, /пошук/i, /перевір/i, /дізнайся/i, /україн/i
   ];
-  
-  const hasTrigger = patterns.some(p => p.test(query));
-  if (hasTrigger) return true;
-  
-  const wordCount = query.split(/\s+/).length;
-  if (wordCount > 50) return true;
-  
-  return false;
+  return patterns.some(p => p.test(query));
 }
 
 // ============================================================
 // 5. ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ
 // ============================================================
 function isImageRequest(query) {
-  const patterns = [/намалюй/i,/згенеруй\s+(зображення|картинку|малюнок|фото)/i,/створи\s+(зображення|картинку|малюнок)/i,/зроби\s+(зображення|картинку|малюнок)/i,/покажи\s+як\s+виглядає/i,/generate\s+image/i,/draw\s+me/i,/малюнок\s+з/i,/картинка\s+з/i];
+  const patterns = [/намалюй/i, /згенеруй/i, /створи\s+(зображення|картинку)/i, /draw\s+me/i];
   return patterns.some(p => p.test(query));
 }
 
 function extractImagePrompt(query) {
-  return query
-    .replace(/намалюй\s*/i, '')
-    .replace(/згенеруй\s+(зображення|картинку|малюнок|фото)\s*/i, '')
-    .replace(/створи\s+(зображення|картинку|малюнок)\s*/i, '')
-    .replace(/зроби\s+(зображення|картинку|малюнок)\s*/i, '')
-    .replace(/покажи\s+як\s+виглядає\s*/i, '')
-    .trim();
+  return query.replace(/намалюй\s*/i, '').replace(/згенеруй\s*(зображення|картинку|малюнок|фото)?\s*/i, '').trim();
 }
 
 function buildImageUrl(prompt) {
@@ -433,18 +589,18 @@ function buildImageUrl(prompt) {
 function addImageBubble(bubble, prompt) {
   const wrap = document.createElement('div');
   wrap.className = 'gen-image-wrap';
-  wrap.innerHTML = `<div class="img-generating"><div class="typing"><span></span><span></span><span></span></div> Генерую зображення...</div>`;
+  wrap.innerHTML = `<div class="img-generating"><div class="typing"><span></span><span></span><span></span></div> Генерую...</div>`;
   bubble.appendChild(wrap);
   scrollBot();
 
   const img = new Image();
   const url = buildImageUrl(prompt);
   img.onload = () => {
-    wrap.innerHTML = `<img src="${url}" alt="${esc(prompt)}"><div class="img-caption">🎨 Pollinations.ai · "${esc(prompt.slice(0,60))}"</div>`;
+    wrap.innerHTML = `<img src="${url}" alt="${esc(prompt)}"><div class="img-caption">🎨 ${esc(prompt.slice(0,60))}</div>`;
     scrollBot();
   };
   img.onerror = () => {
-    wrap.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">⚠️ Не вдалося згенерувати зображення</div>`;
+    wrap.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">⚠️ Помилка генерації</div>`;
   };
   img.src = url;
 }
@@ -452,21 +608,28 @@ function addImageBubble(bubble, prompt) {
 // ============================================================
 // 6. КОД
 // ============================================================
+
 function renderCodeBlock(code, lang) {
   const id = 'cb_' + Math.random().toString(36).slice(2);
-  const isRunnable = ['html', 'javascript', 'js', 'css'].includes((lang||'').toLowerCase());
+  const isRunnableHTML = ['html', 'javascript', 'js', 'css'].includes((lang || '').toLowerCase());
+  const isRunnablePython = (lang || '').toLowerCase() === 'python';
   const safeCode = esc(code);
   const langLabel = lang || 'code';
 
   let actionsHtml = `<button onclick="copyCode('${id}')"><i class="ti ti-copy" style="font-size:10px;"></i></button>`;
-  if (isRunnable) actionsHtml += `<button onclick="runCode('${id}', \`${code.replace(/`/g,'\\`')}\`)"><i class="ti ti-player-play" style="font-size:10px;"></i></button>`;
+  if (isRunnableHTML) {
+    actionsHtml += `<button onclick="runCode('${id}', \`${code.replace(/`/g, '\\`')}\`)"><i class="ti ti-player-play" style="font-size:10px;"></i></button>`;
+  }
+  if (isRunnablePython) {
+    actionsHtml += `<button onclick="runPython('${id}')"><i class="ti ti-brand-python" style="font-size:10px;"></i></button>`;
+  }
 
   return `<div class="code-block" id="${id}">
     <div class="code-header">
       <span class="lang">${langLabel}</span>
       <div class="code-actions">${actionsHtml}</div>
     </div>
-    <pre><code>${safeCode}</code></pre>
+    <pre><code class="hljs language-${langLabel}">${safeCode}</code></pre>
   </div>`;
 }
 
@@ -474,7 +637,7 @@ function copyCode(id) {
   const el = document.getElementById(id);
   if (!el) return;
   const code = el.querySelector('pre code').textContent;
-  navigator.clipboard.writeText(code).then(() => showToast('✅ Код скопійовано!')).catch(() => showToast('❌ Не вдалося скопіювати'));
+  navigator.clipboard.writeText(code).then(() => showToast('✅ Скопійовано')).catch(() => showToast('❌ Помилка'));
 }
 
 function runCode(id, code) {
@@ -493,6 +656,47 @@ function runCode(id, code) {
   scrollBot();
 }
 
+let pyodideReady = false;
+let pyodideInstance = null;
+
+async function runPython(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const code = el.querySelector('pre code').textContent;
+
+  try {
+    if (!pyodideReady) {
+      showToast('⏳ Завантаження Python...');
+      pyodideInstance = await loadPyodide();
+      pyodideReady = true;
+      showToast('✅ Python готовий');
+    }
+
+    showToast('⏳ Виконання...');
+    const result = await pyodideInstance.runPythonAsync(code);
+    showToast('✅ Готово');
+
+    let existing = el.nextElementSibling;
+    if (existing && existing.classList.contains('run-preview')) existing.remove();
+    const preview = document.createElement('div');
+    preview.className = 'run-preview';
+    preview.style.cssText = 'padding: 10px; background: var(--bg-main); color: var(--text); border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap;';
+    preview.textContent = result || '✅ Виконано';
+    el.insertAdjacentElement('afterend', preview);
+    scrollBot();
+  } catch (e) {
+    showToast('❌ Помилка');
+    let existing = el.nextElementSibling;
+    if (existing && existing.classList.contains('run-preview')) existing.remove();
+    const preview = document.createElement('div');
+    preview.className = 'run-preview';
+    preview.style.cssText = 'padding: 10px; background: #fef2f2; color: #991b1b; border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap;';
+    preview.textContent = '❌ ' + e.message;
+    el.insertAdjacentElement('afterend', preview);
+    scrollBot();
+  }
+}
+
 // ============================================================
 // 7. ОСНОВНА ЛОГІКА
 // ============================================================
@@ -505,12 +709,12 @@ const topbarTitle = document.getElementById('topbar-title');
 let chats = [], activeChatId = null, loading = false;
 
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 
 function fmt(text) {
   text = sanitizeText(text);
   if (!text) return '';
-  
+
   const codeBlocks = [];
   let h = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
     const idx = codeBlocks.length;
@@ -529,22 +733,28 @@ function fmt(text) {
     h = h.replace(`%%CODE_BLOCK_${i}%%`, renderCodeBlock(b.code, b.lang));
   });
 
+  setTimeout(() => {
+    document.querySelectorAll('.code-block pre code').forEach((el) => {
+      hljs.highlightElement(el);
+    });
+  }, 50);
+
   return h;
 }
 
 function createChat(title) {
   const id = genId();
-  chats.push({ id, title: title || 'Новий чат', messages: [], created: new Date().toISOString() });
+  chats.push({ id, title: title || translations[currentLang]?.new_chat || 'Новий чат', messages: [], created: new Date().toISOString() });
   activeChatId = id; renderList(); saveLocalChats(); return id;
 }
 
 function deleteChat(id) {
-  if (!confirm('Видалити цей чат?')) return;
+  if (!confirm(translations[currentLang]?.delete_confirm || 'Видалити цей чат?')) return;
   chats = chats.filter(c => c.id !== id);
   if (activeChatId === id) {
-    activeChatId = chats.length > 0 ? chats[chats.length-1].id : null;
-    if (activeChatId) { const c = chats.find(c=>c.id===activeChatId); topbarTitle.textContent=c.title; renderMsgs(c.messages); }
-    else { createChat('Новий чат'); showWelcome(); }
+    activeChatId = chats.length > 0 ? chats[chats.length - 1].id : null;
+    if (activeChatId) { const c = chats.find(c => c.id === activeChatId); topbarTitle.textContent = c.title; renderMsgs(c.messages); }
+    else { createChat(translations[currentLang]?.new_chat || 'Новий чат'); showWelcome(); }
   }
   renderList(); saveLocalChats();
 }
@@ -555,7 +765,7 @@ function renderList() {
     const el = document.createElement('div');
     el.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
     el.innerHTML = `<i class="ti ti-message" aria-hidden="true"></i>${esc(c.title)}`;
-    el.onclick = () => { activeChatId=c.id; topbarTitle.textContent=c.title; renderMsgs(c.messages); renderList(); };
+    el.onclick = () => { activeChatId = c.id; topbarTitle.textContent = c.title; renderMsgs(c.messages); renderList(); };
     const del = document.createElement('span');
     del.className = 'delete-chat'; del.innerHTML = '✕';
     del.onclick = e => { e.stopPropagation(); deleteChat(c.id); };
@@ -564,6 +774,7 @@ function renderList() {
 }
 
 function showWelcome() {
+  const t = translations[currentLang] || translations.uk;
   messagesEl.innerHTML = `<div class="welcome">
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
       <circle cx="24" cy="24" r="22" fill="#C4853A"/>
@@ -572,9 +783,8 @@ function showWelcome() {
       <circle cx="31" cy="25" r="2.3" fill="#3B1F0A" opacity="0.85"/>
       <circle cx="20" cy="30" r="2" fill="#3B1F0A" opacity="0.85"/>
     </svg>
-    <h2>🍪 Coockie AI</h2>
-    <p>Groq + Llama 3.3 70B — розумний, швидкий, безкоштовний!</p>
-    <span class="free-badge">✓ Необмежено · Без реєстрації</span>
+    <h2>${t.welcome_title}</h2>
+    <p>${t.welcome_desc}</p>
   </div>`;
 }
 
@@ -612,11 +822,11 @@ function scrollBot() { messagesEl.scrollTop = messagesEl.scrollHeight; }
 function saveLocalChats() { localStorage.setItem('coockie_chats', JSON.stringify(chats)); }
 
 function loadLocalChats() {
-  try { chats = JSON.parse(localStorage.getItem('coockie_chats') || '[]'); if (!Array.isArray(chats)) chats = []; } catch(e) { chats = []; }
-  if (chats.length === 0) { createChat('Ласкаво просимо'); showWelcome(); return; }
+  try { chats = JSON.parse(localStorage.getItem('coockie_chats') || '[]'); if (!Array.isArray(chats)) chats = []; } catch (e) { chats = []; }
+  if (chats.length === 0) { createChat(translations[currentLang]?.new_chat || 'Новий чат'); showWelcome(); return; }
   renderList();
-  activeChatId = chats[chats.length-1].id;
-  const chat = chats.find(c=>c.id===activeChatId);
+  activeChatId = chats[chats.length - 1].id;
+  const chat = chats.find(c => c.id === activeChatId);
   if (chat) { topbarTitle.textContent = chat.title; renderMsgs(chat.messages); }
 }
 
@@ -629,7 +839,7 @@ async function send() {
 
   const detectedLang = detectLanguage(text);
   const isRus = isRussian(text);
-  
+
   if (!activeChatId) createChat(text.slice(0, 30));
   const chat = chats.find(c => c.id === activeChatId);
   if (!chat) return;
@@ -647,45 +857,34 @@ async function send() {
   try {
     let searchContext = '';
     let searchResults = [];
-    
+
     if (needsInternetSearch(text)) {
       searchResults = await searchWeb(text);
-      
       if (searchResults.length > 0) {
-        searchContext = '\n\n🔍 Актуальна інформація з DuckDuckGo + Qwant:\n' +
-          searchResults.slice(0, 6).map((r, i) => 
-            `${i+1}. **${r.title}**\n   ${r.snippet.slice(0, 350)}${r.snippet.length > 350 ? '...' : ''}`
+        searchContext = '\n\nАктуальна інформація:\n' +
+          searchResults.slice(0, 4).map((r, i) =>
+            `${i + 1}. ${r.title}\n   ${r.snippet.slice(0, 300)}`
           ).join('\n');
-        
-        const sources = searchResults.slice(0, 4).map(r => r.url).filter(u => u && u !== '#');
-        if (sources.length > 0) {
-          searchContext += '\n\n📎 Джерела: ' + sources.join(', ');
-        }
-      } else {
-        searchContext = '\n\n⚠️ Не вдалося знайти актуальну інформацію. Спробуй переформулювати запит.';
+        const sources = searchResults.slice(0, 3).map(r => r.url).filter(u => u && u !== '#');
+        if (sources.length > 0) searchContext += '\n\nДжерела: ' + sources.join(', ');
       }
     }
 
-    const basePrompt = `Ти Coockie — розумний, дружній ШІ-асистент. 
-Ти вмієш:
-- Відповідати на питання та вести бесіду
-- Писати та пояснювати код (використовуй \`\`\`мова ... \`\`\` для блоків коду)
-- Генерувати зображення (якщо просять намалювати — просто опиши що намалюєш, зображення з'явиться автоматично)
-${searchContext ? searchContext : ''}
+    const basePrompt = `Ти досвідчений програміст.
 
-ВАЖЛИВО: Якщо я надав тобі пошукову інформацію — використовуй її для відповіді! Якщо даних недостатньо — чесно скажи про це і дай відповідь на основі своїх знань.`;
+Стиль:
+- Відповідай чітко, по суті, без зайвих слів
+- Не рекламуй свої навички — просто роби свою роботу
+- Розгорнуто відповідай тільки тоді, коли тема складна або цього просять
 
-    let systemPrompt;
-    let warningPrefix = '';
-    
-    if (isRus) {
-      warningPrefix = getRandomWarning() + '\n\n';
-      const langInstruction = getSystemPromptForLanguage('uk');
-      systemPrompt = `${basePrompt}\n\n${langInstruction}\n\nВАЖЛИВО: Користувач написав російською, але ти ВІДПОВІДАЄШ УКРАЇНСЬКОЮ. Спочатку напиши попередження, а потім дай змістовну відповідь.`;
-    } else {
-      const langInstruction = getSystemPromptForLanguage(detectedLang);
-      systemPrompt = `${basePrompt}\n\n${langInstruction}`;
-    }
+Код:
+1. Коротко поясни ідею (1-2 речення)
+2. Покажи код з коментарями
+3. Додай складність алгоритму (якщо доречно)
+
+Мова: ${getSystemPromptForLanguage(detectedLang)}`;
+
+    const systemPrompt = basePrompt + (searchContext ? '\n\nІнформація з пошуку:\n' + searchContext : '');
 
     const messages = [
       { role: 'system', content: systemPrompt },
@@ -693,16 +892,21 @@ ${searchContext ? searchContext : ''}
     ];
 
     if (isRus) {
-      messages.splice(1, 0, { 
-        role: 'system', 
-        content: `Ти маєш відповісти українською. Спочатку напиши: "${warningPrefix}" а потім дай відповідь на запитання користувача.` 
+      messages.splice(1, 0, {
+        role: 'system',
+        content: `Відповідай українською. Спочатку напиши: "${getRandomWarning()}"`
       });
     }
 
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages, max_tokens: 2000, temperature: 0.85 })
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages,
+        max_tokens: 4096,
+        temperature: 0.7
+      })
     });
 
     const data = await resp.json();
@@ -712,15 +916,8 @@ ${searchContext ? searchContext : ''}
     let reply = data.choices?.[0]?.message?.content || '…';
     reply = sanitizeText(reply);
 
-    if (isRus && !reply.includes('Я відповідаю') && !reply.includes('Я не спілкуюся') && !reply.includes('Вибач') && !reply.includes('Російська')) {
+    if (isRus && !reply.includes('відповідаю') && !reply.includes('спілкуюся')) {
       reply = getRandomWarning() + '\n\n' + reply;
-    }
-
-    if (searchResults.length > 0 && !reply.includes('Джерела')) {
-      const sources = searchResults.slice(0, 4).map(r => r.url).filter(u => u && u !== '#');
-      if (sources.length > 0) {
-        reply += '\n\n📎 Джерела: ' + sources.join(', ');
-      }
     }
 
     chat.messages.push({ role: 'ai', text: reply, imagePrompt: imgPrompt });
@@ -729,7 +926,7 @@ ${searchContext ? searchContext : ''}
 
   } catch (e) {
     rmTyping();
-    addBubble('ai', '⚠️ Помилка: ' + esc(e.message));
+    addBubble('ai', '⚠️ ' + esc(e.message));
   }
 
   loading = false; sendBtn.disabled = false;
@@ -745,18 +942,18 @@ function showToast(msg) {
 }
 
 document.getElementById('export-btn').onclick = async function() {
-  if (!chats.length) { showToast('❌ Немає чатів'); return; }
+  if (!chats.length) { showToast(translations[currentLang]?.no_chats || '❌ Немає чатів'); return; }
   try {
     const zip = new JSZip();
     zip.file('chats.json', JSON.stringify({ version: '1.0', exportedAt: new Date().toISOString(), chats }, null, 2));
     chats.forEach(c => {
-      const name = c.title.replace(/[^a-z0-9]/gi,'_').slice(0,30);
+      const name = c.title.replace(/[^a-z0-9]/gi, '_').slice(0, 30);
       zip.file(`chats/${name}_${c.id}.json`, JSON.stringify(c, null, 2));
     });
     const blob = await zip.generateAsync({ type: 'blob' });
-    saveAs(blob, `coockie_chats_${new Date().toISOString().slice(0,10)}.zip`);
-    showToast('✅ Чати експортовано!');
-  } catch(e) { showToast('❌ ' + e.message); }
+    saveAs(blob, `coockie_chats_${new Date().toISOString().slice(0, 10)}.zip`);
+    showToast(translations[currentLang]?.exported || '✅ Чати експортовано');
+  } catch (e) { showToast('❌ ' + e.message); }
 };
 
 document.getElementById('import-file').onchange = async function(e) {
@@ -764,28 +961,51 @@ document.getElementById('import-file').onchange = async function(e) {
   try {
     const zip = await JSZip.loadAsync(file);
     const chatFile = zip.file('chats.json');
-    if (!chatFile) { showToast('❌ Невірний формат'); return; }
+    if (!chatFile) { showToast(translations[currentLang]?.invalid_format || '❌ Невірний формат'); return; }
     const data = JSON.parse(await chatFile.async('text'));
-    if (!data.chats || !Array.isArray(data.chats)) { showToast('❌ Невірні дані'); return; }
-    if (!confirm(`Знайдено ${data.chats.length} чатів. Імпортувати? (Поточні замінять)`)) return;
+    if (!data.chats || !Array.isArray(data.chats)) { showToast(translations[currentLang]?.invalid_data || '❌ Невірні дані'); return; }
+    if (!confirm(translations[currentLang]?.import_confirm || `Знайдено ${data.chats.length} чатів. Імпортувати?`)) return;
     chats = data.chats; saveLocalChats(); loadLocalChats();
-    showToast(`✅ Імпортовано ${chats.length} чатів!`);
+    showToast(translations[currentLang]?.imported || `✅ Імпортовано ${chats.length} чатів`);
     this.value = '';
-  } catch(e) { showToast('❌ ' + e.message); this.value = ''; }
+  } catch (e) { showToast('❌ ' + e.message); this.value = ''; }
 };
 
 // ============================================================
-// 10. ОБРОБНИКИ
+// 10. КРИПТО-ДОНАТИ
+// ============================================================
+document.getElementById('donate-btn')?.addEventListener('click', function(e) {
+  e.preventDefault();
+
+  const wallet = {
+    BTC: 'bc1qtjy3z933wp8060kk4242lnssv4wssxg3msyx0r',
+    USDT: '0x508917633d32E8194562B7BDa654F8A05b6a2428'
+  };
+
+  const t = translations[currentLang] || translations.uk;
+  const msg = t.donate_text
+    .replace('{btc}', wallet.BTC)
+    .replace('{usdt}', wallet.USDT);
+
+  alert(t.donate_title + '\n\n' + msg);
+});
+
+// ============================================================
+// 11. ОБРОБНИКИ
 // ============================================================
 sendBtn.onclick = send;
 textInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
 textInput.addEventListener('input', () => { textInput.style.height = ''; textInput.style.height = Math.min(textInput.scrollHeight, 100) + 'px'; });
-document.getElementById('new-chat-btn').onclick = () => { createChat('Новий чат'); topbarTitle.textContent = 'Новий чат'; showWelcome(); saveLocalChats(); };
+document.getElementById('new-chat-btn').onclick = () => { createChat(translations[currentLang]?.new_chat || 'Новий чат'); topbarTitle.textContent = translations[currentLang]?.new_chat || 'Новий чат'; showWelcome(); saveLocalChats(); };
 
+// ============================================================
+// 12. ЗАВАНТАЖЕННЯ
+// ============================================================
+const savedLang = localStorage.getItem('coockie_interface_lang') || 'uk';
+document.getElementById('lang-select').value = savedLang;
+applyTranslations(savedLang);
 loadLocalChats();
-console.log('🍪 Coockie AI готовий!');
-console.log('🔍 Пошук: DuckDuckGo + Qwant');
-console.log('🔧 Виправлення ієрогліфів — активовано');
+console.log('🍪 Coockie AI готовий');
 </script>
 </body>
 </html>
