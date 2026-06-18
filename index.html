@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Coockie AI</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
@@ -18,6 +18,10 @@
     --text: #1a1a18; --text-muted: #6b6b67; --text-hint: #a8a8a2;
     --border: rgba(0,0,0,0.09); --border-md: rgba(0,0,0,0.14);
     --radius: 10px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --sidebar-width: 220px;
+    --topbar-height: 52px;
+    --bottom-nav-height: 56px;
   }
   @media (prefers-color-scheme: dark) {
     :root {
@@ -26,79 +30,114 @@
       --border: rgba(255,255,255,0.08); --border-md: rgba(255,255,255,0.13);
     }
   }
-  html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: system-ui, sans-serif; }
-  #app { display: flex; height: 100vh; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); font-family: system-ui, -apple-system, sans-serif; touch-action: manipulation; }
+  #app { display: flex; height: 100vh; max-width: 100%; margin: 0 auto; background: var(--bg-main); overflow: hidden; position: relative; }
 
-  #sidebar { width: 200px; flex-shrink: 0; background: var(--bg-sidebar); border-right: 0.5px solid var(--border); display: flex; flex-direction: column; }
-  #logo { padding: 14px 12px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid var(--border); }
-  #logo-text { font-size: 17px; font-weight: 600; color: var(--text); }
-  #logo-text em { color: var(--brown); font-style: normal; }
-  #new-chat-btn { margin: 8px 8px 4px; padding: 7px 10px; background: transparent; border: 0.5px solid var(--border-md); border-radius: var(--radius); color: var(--text-muted); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; }
-  #new-chat-btn:hover { background: var(--bg-main); color: var(--text); }
-  #chats-label { padding: 6px 12px 4px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-hint); }
-  #chat-list { flex: 1; overflow-y: auto; padding: 0 6px 8px; }
-  #chat-list::-webkit-scrollbar { width: 3px; }
-  #chat-list::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
-  .chat-item { padding: 5px 8px; border-radius: var(--radius); cursor: pointer; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background 0.12s; display: flex; align-items: center; gap: 6px; }
-  .chat-item:hover { background: var(--bg-main); color: var(--text); }
-  .chat-item.active { background: var(--bg-main); color: var(--text); font-weight: 500; }
-  .chat-item .delete-chat { margin-left: auto; opacity: 0.3; cursor: pointer; font-size: 11px; padding: 0 3px; flex-shrink: 0; }
-  .chat-item:hover .delete-chat { opacity: 0.8; }
-
-  #backup-buttons { padding: 6px 8px; border-top: 0.5px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; }
-  #backup-buttons button { padding: 4px 8px; font-size: 10px; border: 0.5px solid var(--border-md); border-radius: 5px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
-  #backup-buttons button:hover { background: var(--bg-main); color: var(--text); border-color: var(--brown); }
-  #backup-buttons .import-btn { position: relative; overflow: hidden; }
-  #backup-buttons .import-btn input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-
-  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-main); }
-  #topbar { padding: 8px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-  #topbar-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  #topbar-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; }
-  .top-link { color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s; font-size: 11px; }
-  .top-link:hover { color: var(--brown); }
-  .top-divider { color: var(--border); font-size: 8px; }
-
-  .lang-select {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 16px;
-    cursor: pointer;
-    padding: 2px 4px;
-    outline: none;
-    font-family: inherit;
+  /* ===== АВАТАР З АНІМАЦІЄЮ (СПІЛЬНИЙ ДЛЯ ОБОХ ВЕРСІЙ) ===== */
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    margin-top: 1px;
+    background: var(--bg-sidebar);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: visible;
   }
-  .lang-select:hover { color: var(--text); }
-  .lang-select option { background: var(--bg-main); color: var(--text); font-size: 14px; }
-
-  .donate-btn {
-    display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px;
-    background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a18;
-    border-radius: 20px; font-weight: 600; font-size: 11px; text-decoration: none;
-    transition: all 0.25s ease; border: none; cursor: pointer;
-    box-shadow: 0 2px 8px rgba(247, 151, 30, 0.25);
+  .avatar .cookie-emoji {
+    font-size: 20px;
+    line-height: 1;
+    display: block;
+    transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transform-origin: center center;
   }
-  .donate-btn:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(247, 151, 30, 0.4); }
-  .donate-btn i { font-size: 14px; }
+  /* Анімація під час друку: рух вперед + обертання */
+  .avatar.typing .cookie-emoji {
+    animation: cookieFloatSpin 1.2s ease-in-out infinite;
+  }
+  /* Анімація після завершення: повернення на місце з пружинкою */
+  .avatar.done .cookie-emoji {
+    animation: cookieReturn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
 
-  #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-  #messages::-webkit-scrollbar { width: 4px; }
-  #messages::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+  @keyframes cookieFloatSpin {
+    0% { transform: translateX(0) rotate(0deg) scale(1); }
+    25% { transform: translateX(20px) rotate(90deg) scale(1.1); }
+    50% { transform: translateX(40px) rotate(180deg) scale(1.2); }
+    75% { transform: translateX(20px) rotate(270deg) scale(1.1); }
+    100% { transform: translateX(0) rotate(360deg) scale(1); }
+  }
+  @keyframes cookieReturn {
+    0% { transform: translateX(40px) rotate(360deg) scale(1.2); }
+    60% { transform: translateX(-5px) rotate(300deg) scale(1.05); }
+    80% { transform: translateX(3px) rotate(340deg) scale(0.98); }
+    100% { transform: translateX(0) rotate(360deg) scale(1); }
+  }
 
-  .welcome { margin: auto; text-align: center; padding: 16px; max-width: 380px; }
-  .welcome h2 { font-size: 18px; font-weight: 600; color: var(--text); margin: 8px 0 4px; }
-  .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
-
-  .msg { display: flex; gap: 8px; }
+  /* ===== ДЕСКТОПНІ ПОВІДОМЛЕННЯ ===== */
+  .msg {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
   .msg.user { flex-direction: row-reverse; }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; margin-top: 1px; }
-  .avatar.ai { background: var(--brown); }
-  .avatar.user { background: #dbeafe; color: #1d4ed8; font-weight: 500; }
-  .bubble { max-width: calc(100% - 70px); padding: 6px 12px; font-size: 13.5px; line-height: 1.6; color: var(--text); word-break: break-word; }
-  .msg.ai .bubble { background: var(--bg-sidebar); border: 0.5px solid var(--border); border-radius: 4px 12px 12px 12px; }
-  .msg.user .bubble { background: var(--brown); color: #fdf6ec; border-radius: 12px 4px 12px 12px; }
+  .msg .avatar { width: 36px; height: 36px; font-size: 22px; flex-shrink: 0; }
+  .msg .avatar .cookie-emoji { font-size: 22px; }
+  .msg .bubble {
+    max-width: calc(100% - 56px);
+    padding: 8px 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text);
+    word-break: break-word;
+    background: var(--bg-sidebar);
+    border: 0.5px solid var(--border);
+    border-radius: 4px 14px 14px 14px;
+  }
+  .msg.user .bubble {
+    background: var(--brown);
+    color: #fdf6ec;
+    border-radius: 14px 4px 14px 14px;
+  }
 
+  /* ===== МОБІЛЬНІ ПОВІДОМЛЕННЯ ===== */
+  .msg-mobile {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    max-width: 100%;
+  }
+  .msg-mobile.user { flex-direction: row-reverse; }
+  .msg-mobile .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .msg-mobile .avatar .cookie-emoji { font-size: 18px; }
+  .msg-mobile .bubble {
+    max-width: 82%;
+    padding: 8px 12px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text);
+    word-break: break-word;
+    background: var(--bg-sidebar);
+    border: 0.5px solid var(--border);
+    border-radius: 4px 14px 14px 14px;
+  }
+  .msg-mobile.user .bubble {
+    background: var(--brown);
+    color: #fdf6ec;
+    border-radius: 14px 4px 14px 14px;
+  }
+
+  /* ===== ІНШІ СТИЛІ (СКОРОЧЕНО ДЛЯ ОБСЯГУ) ===== */
   .code-block { margin: 6px 0; border-radius: 6px; overflow: hidden; border: 0.5px solid var(--border-md); }
   .code-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(0,0,0,0.08); font-size: 10px; color: var(--text-muted); }
   .code-header .lang { font-weight: 600; }
@@ -107,24 +146,74 @@
   .code-actions button:hover { background: var(--bg-main); color: var(--text); }
   .code-block pre { margin: 0; padding: 10px; background: #0d1117; overflow-x: auto; font-size: 13px; font-family: 'Consolas', 'Monaco', monospace; line-height: 1.5; }
   .code-block pre code { font-family: inherit; }
-  .msg.ai .bubble code:not(.code-block code) { background: rgba(0,0,0,0.06); padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: monospace; }
-  .msg.user .bubble code { background: rgba(255,255,255,0.15); padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: monospace; }
-
   .gen-image-wrap { margin: 6px 0; }
   .gen-image-wrap img { max-width: 100%; max-height: 260px; border-radius: 8px; display: block; border: 0.5px solid var(--border-md); }
   .gen-image-wrap .img-caption { font-size: 10px; color: var(--text-hint); margin-top: 3px; }
   .img-generating { display: flex; align-items: center; gap: 6px; padding: 10px; background: var(--bg-sidebar); border-radius: 8px; border: 0.5px solid var(--border); font-size: 12px; color: var(--text-muted); }
-
   .run-preview { margin: 6px 0; border: 0.5px solid var(--border-md); border-radius: 6px; overflow: hidden; }
   .run-preview iframe { width: 100%; height: 260px; border: none; background: white; }
-
   .typing { display: flex; gap: 3px; align-items: center; padding: 2px 0; }
   .typing span { width: 6px; height: 6px; background: var(--text-hint); border-radius: 50%; animation: blink 1.2s infinite; }
   .typing span:nth-child(2) { animation-delay: 0.2s; }
   .typing span:nth-child(3) { animation-delay: 0.4s; }
   @keyframes blink { 0%,80%,100%{opacity:.2}40%{opacity:1} }
 
-  #input-area { border-top: 0.5px solid var(--border); padding: 10px 14px; }
+  /* ===== TOAST ===== */
+  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 20px; border-radius: 6px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 999; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; }
+
+  /* ================================================================ */
+  /* ===== ДЕСКТОПНА ВЕРСІЯ ===== */
+  /* ================================================================ */
+  #sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    background: var(--bg-sidebar);
+    border-right: 0.5px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+  #logo { padding: 14px 12px 10px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+  #logo-text { font-size: 17px; font-weight: 600; color: var(--text); }
+  #logo-text em { color: var(--brown); font-style: normal; }
+  #new-chat-btn { margin: 8px 8px 4px; padding: 7px 10px; background: transparent; border: 0.5px solid var(--border-md); border-radius: var(--radius); color: var(--text-muted); font-size: 12px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: all 0.15s; flex-shrink: 0; }
+  #new-chat-btn:hover { background: var(--bg-main); color: var(--text); }
+  #chats-label { padding: 6px 12px 4px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-hint); flex-shrink: 0; }
+  #chat-list { flex: 1; overflow-y: auto; padding: 0 6px 8px; }
+  #chat-list::-webkit-scrollbar { width: 3px; }
+  #chat-list::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 3px; }
+  .chat-item { padding: 5px 8px; border-radius: var(--radius); cursor: pointer; font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: background 0.12s; display: flex; align-items: center; gap: 6px; }
+  .chat-item:hover { background: var(--bg-main); color: var(--text); }
+  .chat-item.active { background: var(--bg-main); color: var(--text); font-weight: 500; }
+  .chat-item .delete-chat { margin-left: auto; opacity: 0.3; cursor: pointer; font-size: 11px; padding: 0 3px; flex-shrink: 0; }
+  .chat-item:hover .delete-chat { opacity: 0.8; }
+  #backup-buttons { padding: 6px 8px; border-top: 0.5px solid var(--border); display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; }
+  #backup-buttons button { padding: 4px 8px; font-size: 10px; border: 0.5px solid var(--border-md); border-radius: 5px; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; gap: 3px; flex: 1; justify-content: center; }
+  #backup-buttons button:hover { background: var(--bg-main); color: var(--text); border-color: var(--brown); }
+  #backup-buttons .import-btn { position: relative; overflow: hidden; }
+  #backup-buttons .import-btn input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  #main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-main); height: 100vh; overflow: hidden; }
+  #topbar { padding: 8px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; flex-shrink: 0; min-height: var(--topbar-height); }
+  #topbar-title { font-size: 14px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #topbar-links { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; }
+  .top-link { color: var(--text-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; transition: color 0.2s; font-size: 11px; }
+  .top-link:hover { color: var(--brown); }
+  .top-divider { color: var(--border); font-size: 8px; }
+  .lang-select { background: transparent; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; padding: 2px 4px; outline: none; font-family: inherit; }
+  .lang-select:hover { color: var(--text); }
+  .lang-select option { background: var(--bg-main); color: var(--text); font-size: 14px; }
+  .donate-btn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 14px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a18; border-radius: 20px; font-weight: 600; font-size: 11px; text-decoration: none; transition: all 0.25s ease; border: none; cursor: pointer; box-shadow: 0 2px 8px rgba(247, 151, 30, 0.25); }
+  .donate-btn:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(247, 151, 30, 0.4); }
+  .donate-btn i { font-size: 14px; }
+  #messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; background: var(--bg); }
+  #messages::-webkit-scrollbar { width: 4px; }
+  #messages::-webkit-scrollbar-thumb { background: var(--border-md); border-radius: 4px; }
+  .welcome { margin: auto; text-align: center; padding: 16px; max-width: 380px; }
+  .welcome h2 { font-size: 18px; font-weight: 600; color: var(--text); margin: 8px 0 4px; }
+  .welcome p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  #input-area { border-top: 0.5px solid var(--border); padding: 10px 14px; flex-shrink: 0; background: var(--bg-main); }
   #input-row { display: flex; gap: 6px; align-items: flex-end; }
   #text-input { flex: 1; min-height: 32px; max-height: 100px; padding: 6px 10px; border: 0.5px solid var(--border-md); border-radius: var(--radius); background: var(--bg-main); color: var(--text); font-size: 13px; resize: none; font-family: inherit; line-height: 1.4; outline: none; transition: border-color 0.15s; }
   #text-input:focus { border-color: var(--brown); }
@@ -134,12 +223,107 @@
   #send-btn:active { transform: scale(0.92); }
   #send-btn:disabled { opacity: 0.35; cursor: default; transform: none; }
 
-  .toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 20px; border-radius: 6px; font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 999; pointer-events: none; white-space: nowrap; }
-  .toast.show { opacity: 1; }
+  /* ================================================================ */
+  /* ===== МОБІЛЬНА ВЕРСІЯ ===== */
+  /* ================================================================ */
+  .mobile-only { display: none !important; }
+  #bottom-nav { display: none; }
+  #chat-screen-mobile { display: none; }
+  #chat-list-screen-mobile { display: none; }
+  .back-btn { display: none; }
+  #input-area-mobile { display: none; }
+  #messages-mobile { display: none; }
+
+  @media (max-width: 600px) {
+    :root { --sidebar-width: 0px; --topbar-height: 48px; --bottom-nav-height: 56px; }
+    #sidebar { display: none !important; }
+    #messages { display: none !important; }
+    #input-area { display: none !important; }
+    #topbar-links .top-link, #topbar-links .top-divider, #topbar-links .donate-btn { display: none !important; }
+    .mobile-only { display: flex !important; }
+    #app { flex-direction: column; height: 100vh; }
+
+    #topbar { padding: 6px 12px; min-height: var(--topbar-height); border-bottom: 0.5px solid var(--border); flex-shrink: 0; z-index: 10; background: var(--bg-main); }
+    #topbar-left { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; }
+    .back-btn { display: flex !important; background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer; padding: 4px; }
+    #topbar-title { font-size: 15px; font-weight: 600; }
+    #topbar-right { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    .lang-select-mobile { background: transparent; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; padding: 2px; outline: none; font-family: inherit; }
+    .lang-select-mobile option { background: var(--bg-main); color: var(--text); font-size: 14px; }
+    .top-icon-btn { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px; transition: color 0.2s; display: flex; align-items: center; }
+    .top-icon-btn:hover { color: var(--text); }
+
+    #chat-list-screen-mobile { display: flex !important; flex: 1; flex-direction: column; overflow-y: auto; padding: 4px 0; background: var(--bg-main); }
+    #chat-list-screen-mobile::-webkit-scrollbar { width: 0; }
+    .chat-list-header-mobile { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px 4px; flex-shrink: 0; }
+    .chat-list-header-mobile h3 { font-size: 13px; font-weight: 600; color: var(--text); }
+    .new-chat-btn-mobile { background: var(--brown); color: white; border: none; border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 500; cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all 0.2s; }
+    .new-chat-btn-mobile:active { transform: scale(0.95); }
+    .new-chat-btn-mobile i { font-size: 14px; }
+
+    .chat-item-mobile { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 0.5px solid var(--border); cursor: pointer; transition: background 0.15s; }
+    .chat-item-mobile:active { background: var(--bg-sidebar); }
+    .chat-item-mobile .avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--bg-sidebar); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; border: 0.5px solid var(--border); }
+    .chat-item-mobile .avatar .cookie-emoji { font-size: 20px; }
+    .chat-item-mobile .info { flex: 1; min-width: 0; }
+    .chat-item-mobile .info .name { font-size: 13px; font-weight: 500; color: var(--text); }
+    .chat-item-mobile .info .preview { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .chat-item-mobile .time { font-size: 10px; color: var(--text-hint); flex-shrink: 0; }
+    .chat-item-mobile .delete-chat-mobile { background: none; border: none; color: var(--text-hint); font-size: 14px; cursor: pointer; padding: 4px; opacity: 0.3; transition: opacity 0.2s; }
+    .chat-item-mobile:hover .delete-chat-mobile { opacity: 0.8; }
+
+    #chat-screen-mobile { display: none !important; flex: 1; flex-direction: column; background: var(--bg-main); height: 100%; }
+    #chat-screen-mobile.active { display: flex !important; }
+    #messages-mobile { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+    #messages-mobile::-webkit-scrollbar { width: 0; }
+    .welcome-mobile { margin: auto; text-align: center; padding: 16px; }
+    .welcome-mobile h2 { font-size: 20px; font-weight: 600; color: var(--text); margin: 6px 0 2px; }
+    .welcome-mobile p { font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+    #input-area-mobile { display: flex !important; border-top: 0.5px solid var(--border); padding: 6px 10px 10px; background: var(--bg-main); flex-shrink: 0; padding-bottom: calc(10px + var(--safe-bottom)); }
+    #input-row-mobile { display: flex; gap: 6px; align-items: flex-end; width: 100%; }
+    .input-actions { display: flex; gap: 2px; align-items: center; flex-shrink: 0; }
+    .input-actions button { background: none; border: none; color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 4px; transition: color 0.2s; display: flex; align-items: center; }
+    .input-actions button:hover { color: var(--brown); }
+    #text-input-mobile { flex: 1; min-height: 32px; max-height: 80px; padding: 6px 10px; border: 0.5px solid var(--border-md); border-radius: 18px; background: var(--bg-sidebar); color: var(--text); font-size: 14px; resize: none; font-family: inherit; line-height: 1.4; outline: none; transition: border-color 0.15s; }
+    #text-input-mobile:focus { border-color: var(--brown); }
+    #text-input-mobile::placeholder { color: var(--text-hint); font-size: 13px; }
+    #send-btn-mobile { width: 36px; height: 36px; flex-shrink: 0; background: var(--brown); border: none; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; transition: background 0.15s, transform 0.1s; }
+    #send-btn-mobile:hover { background: var(--brown-dark); }
+    #send-btn-mobile:active { transform: scale(0.92); }
+    #send-btn-mobile:disabled { opacity: 0.35; cursor: default; transform: none; }
+    #send-btn-mobile i { font-size: 16px; }
+
+    #bottom-nav { display: flex !important; align-items: center; justify-content: space-around; padding: 4px 6px calc(4px + var(--safe-bottom)); background: var(--bg-main); border-top: 0.5px solid var(--border); flex-shrink: 0; min-height: var(--bottom-nav-height); }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 1px; background: none; border: none; color: var(--text-hint); font-size: 9px; cursor: pointer; padding: 2px 8px; transition: color 0.2s; font-family: inherit; position: relative; }
+    .nav-item i { font-size: 20px; }
+    .nav-item span { font-size: 8px; }
+    .nav-item.active { color: var(--brown); }
+    .nav-item.active i { color: var(--brown); }
+    .nav-item:active { transform: scale(0.92); }
+
+    .donate-btn-mobile { display: inline-flex; align-items: center; gap: 3px; padding: 3px 10px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #1a1a18; border-radius: 14px; font-weight: 600; font-size: 10px; text-decoration: none; transition: all 0.25s ease; border: none; cursor: pointer; }
+    .donate-btn-mobile:active { transform: scale(0.95); }
+    .lang-select { display: none !important; }
+  }
+
+  @media (max-width: 380px) {
+    #topbar-title { font-size: 13px; }
+    .chat-item-mobile { padding: 8px 12px; }
+    .chat-item-mobile .avatar { width: 32px; height: 32px; font-size: 12px; }
+    .chat-item-mobile .avatar .cookie-emoji { font-size: 16px; }
+    .msg-mobile .bubble { font-size: 13px; padding: 6px 10px; }
+    .msg-mobile .avatar { width: 28px; height: 28px; font-size: 16px; }
+    .msg-mobile .avatar .cookie-emoji { font-size: 16px; }
+    .msg .avatar { width: 28px; height: 28px; font-size: 16px; }
+    .msg .avatar .cookie-emoji { font-size: 16px; }
+    #text-input-mobile { font-size: 13px; padding: 5px 8px; }
+  }
 </style>
 </head>
 <body>
 <div id="app">
+  <!-- ДЕСКТОПНА ЧАСТИНА (прихована на мобільному) -->
   <div id="sidebar">
     <div id="logo">
       <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
@@ -154,29 +338,26 @@
       </svg>
       <div id="logo-text">Cooc<em>kie</em></div>
     </div>
-    <button id="new-chat-btn" data-i18n="new_chat"><i class="ti ti-plus" aria-hidden="true"></i> <span>Новий чат</span></button>
-    <div id="chats-label" data-i18n="chats">Чати</div>
+    <button id="new-chat-btn"><i class="ti ti-plus"></i> Новий чат</button>
+    <div id="chats-label">Чати</div>
     <div id="chat-list"></div>
     <div id="backup-buttons">
-      <button id="export-btn" data-i18n="export"><i class="ti ti-download"></i></button>
-      <button class="import-btn" data-i18n="import"><i class="ti ti-upload"></i> <input type="file" id="import-file" accept=".zip"></button>
+      <button id="export-btn"><i class="ti ti-download"></i></button>
+      <button class="import-btn"><i class="ti ti-upload"></i> <input type="file" id="import-file" accept=".zip"></button>
     </div>
   </div>
 
   <div id="main">
+    <!-- Верхня панель -->
     <div id="topbar">
-      <div id="topbar-title" data-i18n="new_chat">Новий чат</div>
+      <div id="topbar-title">Новий чат</div>
       <div id="topbar-links">
         <select id="lang-select" class="lang-select">
-          <option value="uk" data-flag="🇺🇦">🇺🇦</option>
-          <option value="en" data-flag="🇬🇧">🇬🇧</option>
-          <option value="pl" data-flag="🇵🇱">🇵🇱</option>
-          <option value="de" data-flag="🇩🇪">🇩🇪</option>
-          <option value="fr" data-flag="🇫🇷">🇫🇷</option>
-          <option value="es" data-flag="🇪🇸">🇪🇸</option>
-          <option value="jp" data-flag="🇯🇵">🇯🇵</option>
-          <option value="zh" data-flag="🇨🇳">🇨🇳</option>
-          <option value="ar" data-flag="🇸🇦">🇸🇦</option>
+          <option value="uk">🇺🇦</option><option value="en">🇬🇧</option>
+          <option value="pl">🇵🇱</option><option value="de">🇩🇪</option>
+          <option value="fr">🇫🇷</option><option value="es">🇪🇸</option>
+          <option value="jp">🇯🇵</option><option value="zh">🇨🇳</option>
+          <option value="ar">🇸🇦</option>
         </select>
         <span class="top-divider">|</span>
         <a href="https://groq.com" target="_blank" class="top-link"><i class="ti ti-key"></i> Groq</a>
@@ -185,226 +366,224 @@
         <span class="top-divider">|</span>
         <a href="https://github.com/snakeofskr1pt-afk" target="_blank" class="top-link"><i class="ti ti-brand-github"></i> GitHub</a>
         <span class="top-divider">|</span>
-        <a href="#" class="donate-btn" id="donate-btn" data-i18n="support"><i class="ti ti-coins"></i> <span>Підтримати</span></a>
+        <a href="#" class="donate-btn" id="donate-btn"><i class="ti ti-coins"></i> Підтримати</a>
       </div>
     </div>
+
+    <!-- Десктопні повідомлення -->
     <div id="messages"></div>
+
+    <!-- Десктопне поле вводу -->
     <div id="input-area">
       <div id="input-row">
-        <textarea id="text-input" placeholder="Напиши запит або код..." rows="1" data-i18n-placeholder="input_placeholder"></textarea>
+        <textarea id="text-input" placeholder="Напиши запит або код..." rows="1"></textarea>
         <button id="send-btn"><i class="ti ti-arrow-up" style="font-size:16px;"></i></button>
       </div>
     </div>
   </div>
+
+  <!-- ===== МОБІЛЬНА ЧАСТИНА ===== -->
+  <!-- Верхня панель (мобільна) -->
+  <div id="topbar" class="mobile-only" style="display:none;">
+    <div id="topbar-left">
+      <button class="back-btn" id="back-btn"><i class="ti ti-arrow-left"></i></button>
+      <span id="topbar-title-mobile">🍪 Coockie</span>
+    </div>
+    <div id="topbar-right">
+      <select id="lang-select-mobile" class="lang-select-mobile">
+        <option value="uk">🇺🇦</option><option value="en">🇬🇧</option>
+        <option value="pl">🇵🇱</option><option value="de">🇩🇪</option>
+        <option value="fr">🇫🇷</option><option value="es">🇪🇸</option>
+        <option value="jp">🇯🇵</option><option value="zh">🇨🇳</option>
+        <option value="ar">🇸🇦</option>
+      </select>
+      <button class="top-icon-btn" id="donate-btn-mobile"><i class="ti ti-coins"></i></button>
+    </div>
+  </div>
+
+  <!-- Список чатів (мобільний) -->
+  <div id="chat-list-screen-mobile" class="mobile-only">
+    <div class="chat-list-header-mobile">
+      <h3 id="chats-label-mobile">Чати</h3>
+      <button class="new-chat-btn-mobile" id="new-chat-btn-mobile"><i class="ti ti-plus"></i> Новий</button>
+    </div>
+    <div id="chat-list-mobile"></div>
+  </div>
+
+  <!-- Екран чату (мобільний) -->
+  <div id="chat-screen-mobile" class="mobile-only">
+    <div id="messages-mobile"></div>
+    <div id="input-area-mobile">
+      <div id="input-row-mobile">
+        <div class="input-actions">
+          <button id="attach-btn-mobile"><i class="ti ti-photo"></i></button>
+        </div>
+        <textarea id="text-input-mobile" placeholder="Напиши запит..." rows="1"></textarea>
+        <button id="send-btn-mobile"><i class="ti ti-arrow-up"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Нижня навігація (мобільна) -->
+  <div id="bottom-nav" class="mobile-only">
+    <button class="nav-item active" data-tab="chats" id="nav-chats"><i class="ti ti-messages"></i><span>Чати</span></button>
+    <button class="nav-item" data-tab="chat" id="nav-chat"><i class="ti ti-message-circle"></i><span>Чат</span></button>
+    <button class="nav-item" data-tab="search" id="nav-search"><i class="ti ti-search"></i><span>Пошук</span></button>
+    <button class="nav-item" data-tab="settings" id="nav-settings"><i class="ti ti-settings"></i><span>Налаштування</span></button>
+    <button class="nav-item" data-tab="support" id="nav-support"><i class="ti ti-coins"></i><span>Донати</span></button>
+  </div>
 </div>
+
 <div id="toast" class="toast"></div>
 
 <script>
 // ============================================================
-// 0. ЛОКАЛІЗАЦІЯ
+// 1. ЛОКАЛІЗАЦІЯ
 // ============================================================
 const translations = {
   uk: {
-    new_chat: 'Новий чат',
-    chats: 'Чати',
-    export: 'Експорт',
-    import: 'Імпорт',
-    support: 'Підтримати',
-    input_placeholder: 'Напиши запит або код...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Пиши код, запитуй, розбирай — будь-якою мовою.',
-    donate_title: '🍪 Підтримати Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Мову змінено на {lang}'
+    new_chat: 'Новий чат', chats: 'Чати', support: 'Підтримати', input_placeholder: 'Напиши запит або код...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Пиши код, запитуй, розбирай — будь-якою мовою.',
+    donate_title: '🍪 Підтримати Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Мову змінено на {lang}', no_chats: 'Немає чатів', delete_confirm: 'Видалити цей чат?',
+    exported: 'Чати експортовано', imported: 'Чати імпортовано', invalid_format: 'Невірний формат',
+    invalid_data: 'Невірні дані', import_confirm: 'Знайдено {count} чатів. Імпортувати?'
   },
   en: {
-    new_chat: 'New chat',
-    chats: 'Chats',
-    export: 'Export',
-    import: 'Import',
-    support: 'Support',
-    input_placeholder: 'Write a query or code...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Write code, ask, explore — in any language.',
-    donate_title: '🍪 Support Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Language changed to {lang}'
+    new_chat: 'New chat', chats: 'Chats', support: 'Support', input_placeholder: 'Write a query or code...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Write code, ask, explore — in any language.',
+    donate_title: '🍪 Support Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Language changed to {lang}', no_chats: 'No chats', delete_confirm: 'Delete this chat?',
+    exported: 'Chats exported', imported: 'Chats imported', invalid_format: 'Invalid format',
+    invalid_data: 'Invalid data', import_confirm: 'Found {count} chats. Import?'
   },
   pl: {
-    new_chat: 'Nowy czat',
-    chats: 'Czaty',
-    export: 'Eksport',
-    import: 'Import',
-    support: 'Wsparcie',
-    input_placeholder: 'Napisz zapytanie lub kod...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Pisz kod, pytaj, analizuj — w każdym języku.',
-    donate_title: '🍪 Wsparcie Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Język zmieniony na {lang}'
+    new_chat: 'Nowy czat', chats: 'Czaty', support: 'Wsparcie', input_placeholder: 'Napisz zapytanie lub kod...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Pisz kod, pytaj, analizuj — w każdym języku.',
+    donate_title: '🍪 Wsparcie Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Język zmieniony na {lang}', no_chats: 'Brak czatów', delete_confirm: 'Usunąć ten czat?',
+    exported: 'Czaty wyeksportowane', imported: 'Czaty zaimportowane', invalid_format: 'Nieprawidłowy format',
+    invalid_data: 'Nieprawidłowe dane', import_confirm: 'Znaleziono {count} czatów. Importować?'
   },
   de: {
-    new_chat: 'Neuer Chat',
-    chats: 'Chats',
-    export: 'Export',
-    import: 'Import',
-    support: 'Unterstützen',
-    input_placeholder: 'Schreibe eine Anfrage oder Code...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Code schreiben, fragen, analysieren — in jeder Sprache.',
-    donate_title: '🍪 Coockie AI unterstützen',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Sprache auf {lang} geändert'
+    new_chat: 'Neuer Chat', chats: 'Chats', support: 'Unterstützen', input_placeholder: 'Schreibe eine Anfrage...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Code schreiben, fragen, analysieren — in jeder Sprache.',
+    donate_title: '🍪 Coockie AI unterstützen', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Sprache auf {lang} geändert', no_chats: 'Keine Chats', delete_confirm: 'Diesen Chat löschen?',
+    exported: 'Chats exportiert', imported: 'Chats importiert', invalid_format: 'Ungültiges Format',
+    invalid_data: 'Ungültige Daten', import_confirm: '{count} Chats gefunden. Importieren?'
   },
   fr: {
-    new_chat: 'Nouveau chat',
-    chats: 'Chats',
-    export: 'Exporter',
-    import: 'Importer',
-    support: 'Soutenir',
-    input_placeholder: 'Écris une requête ou du code...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Écris du code, pose des questions, explore — dans toutes les langues.',
-    donate_title: '🍪 Soutenir Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Langue changée en {lang}'
+    new_chat: 'Nouveau chat', chats: 'Chats', support: 'Soutenir', input_placeholder: 'Écris une requête...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Écris du code, pose des questions, explore.',
+    donate_title: '🍪 Soutenir Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Langue changée en {lang}', no_chats: 'Aucun chat', delete_confirm: 'Supprimer ce chat?',
+    exported: 'Chats exportés', imported: 'Chats importés', invalid_format: 'Format invalide',
+    invalid_data: 'Données invalides', import_confirm: '{count} chats trouvés. Importer?'
   },
   es: {
-    new_chat: 'Nuevo chat',
-    chats: 'Chats',
-    export: 'Exportar',
-    import: 'Importar',
-    support: 'Apoyar',
-    input_placeholder: 'Escribe una consulta o código...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'Escribe código, pregunta, explora — en cualquier idioma.',
-    donate_title: '🍪 Apoyar Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'Idioma cambiado a {lang}'
+    new_chat: 'Nuevo chat', chats: 'Chats', support: 'Apoyar', input_placeholder: 'Escribe una consulta...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'Escribe código, pregunta, explora — en cualquier idioma.',
+    donate_title: '🍪 Apoyar Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'Idioma cambiado a {lang}', no_chats: 'Sin chats', delete_confirm: '¿Eliminar este chat?',
+    exported: 'Chats exportados', imported: 'Chats importados', invalid_format: 'Formato inválido',
+    invalid_data: 'Datos inválidos', import_confirm: 'Encontrados {count} chats. ¿Importar?'
   },
   jp: {
-    new_chat: '新しいチャット',
-    chats: 'チャット',
-    export: 'エクスポート',
-    import: 'インポート',
-    support: 'サポート',
-    input_placeholder: '質問やコードを入力...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'コードを書き、質問し、あらゆる言語で探索できます。',
-    donate_title: '🍪 Coockie AIをサポート',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: '言語を{lang}に変更しました'
+    new_chat: '新しいチャット', chats: 'チャット', support: 'サポート', input_placeholder: '質問やコードを入力...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'コードを書き、質問し、あらゆる言語で探索。',
+    donate_title: '🍪 Coockie AIをサポート', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: '言語を{lang}に変更', no_chats: 'チャットなし', delete_confirm: 'このチャットを削除？',
+    exported: 'チャットをエクスポート', imported: 'チャットをインポート', invalid_format: '無効な形式',
+    invalid_data: '無効なデータ', import_confirm: '{count}件のチャットをインポート？'
   },
   zh: {
-    new_chat: '新聊天',
-    chats: '聊天',
-    export: '导出',
-    import: '导入',
-    support: '支持',
-    input_placeholder: '输入查询或代码...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: '编写代码、提问、探索——任意语言。',
-    donate_title: '🍪 支持 Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: '语言已切换为 {lang}'
+    new_chat: '新聊天', chats: '聊天', support: '支持', input_placeholder: '输入查询或代码...',
+    welcome_title: '🍪 Coockie', welcome_desc: '编写代码、提问、探索——任意语言。',
+    donate_title: '🍪 支持 Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: '语言已切换为 {lang}', no_chats: '无聊天', delete_confirm: '删除此聊天？',
+    exported: '聊天已导出', imported: '聊天已导入', invalid_format: '格式无效',
+    invalid_data: '数据无效', import_confirm: '找到 {count} 个聊天。导入？'
   },
   ar: {
-    new_chat: 'محادثة جديدة',
-    chats: 'المحادثات',
-    export: 'تصدير',
-    import: 'استيراد',
-    support: 'دعم',
-    input_placeholder: 'اكتب سؤالاً أو كود...',
-    welcome_title: '🍪 Coockie',
-    welcome_desc: 'اكتب الكود، اسأل، استكشف — بأي لغة.',
-    donate_title: '🍪 دعم Coockie AI',
-    donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
-    language_switched: 'تم تغيير اللغة إلى {lang}'
+    new_chat: 'محادثة جديدة', chats: 'المحادثات', support: 'دعم', input_placeholder: 'اكتب سؤالاً أو كود...',
+    welcome_title: '🍪 Coockie', welcome_desc: 'اكتب الكود، اسأل، استكشف — بأي لغة.',
+    donate_title: '🍪 دعم Coockie AI', donate_text: 'BTC:\n{btc}\n\nUSDT (ERC20):\n{usdt}',
+    language_switched: 'تم تغيير اللغة إلى {lang}', no_chats: 'لا توجد محادثات', delete_confirm: 'حذف هذه المحادثة؟',
+    exported: 'تم تصدير المحادثات', imported: 'تم استيراد المحادثات', invalid_format: 'تنسيق غير صالح',
+    invalid_data: 'بيانات غير صالحة', import_confirm: 'تم العثور على {count} محادثة. استيراد؟'
   }
 };
 
-let currentLang = localStorage.getItem('coockie_interface_lang') || 'uk';
+let currentLang = localStorage.getItem('coockie_mobile_lang') || 'uk';
 
 function getLangName(code) {
   const names = { uk: 'українську', en: 'English', pl: 'polski', de: 'Deutsch', fr: 'français', es: 'español', jp: '日本語', zh: '中文', ar: 'العربية' };
   return names[code] || code;
 }
 
-function applyTranslations(lang) {
-  const t = translations[lang] || translations.uk;
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (t[key]) {
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-        el.placeholder = t[key];
-      } else {
-        // Шукаємо span всередині або просто замінюємо текст
-        const span = el.querySelector('span');
-        if (span) {
-          span.textContent = t[key];
-        } else {
-          el.textContent = t[key];
-        }
-      }
-    }
-  });
-
-  // Оновлюємо placeholder для textarea
-  const input = document.getElementById('text-input');
-  if (input && t.input_placeholder) {
-    input.placeholder = t.input_placeholder;
+function t(key, ...args) {
+  const dict = translations[currentLang] || translations.uk;
+  let val = dict[key] || key;
+  if (args.length) {
+    args.forEach((arg, i) => { val = val.replace(`{${i}}`, arg); });
   }
-
-  // Оновлюємо welcome-повідомлення
-  const welcome = document.querySelector('.welcome');
-  if (welcome) {
-    const title = welcome.querySelector('h2');
-    const desc = welcome.querySelector('p');
-    if (title) title.textContent = t.welcome_title;
-    if (desc) desc.textContent = t.welcome_desc;
-  }
-
-  // Зберігаємо мову
-  localStorage.setItem('coockie_interface_lang', lang);
-  currentLang = lang;
+  return val;
 }
 
-// Обробник зміни мови
-document.getElementById('lang-select')?.addEventListener('change', function() {
-  const lang = this.value;
-  applyTranslations(lang);
-  showToast(translations[lang].language_switched.replace('{lang}', getLangName(lang)));
-});
+function applyTranslations() {
+  const dict = translations[currentLang] || translations.uk;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.dataset.i18n;
+    if (dict[key]) {
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') el.placeholder = dict[key];
+      else el.textContent = dict[key];
+    }
+  });
+  const label = document.getElementById('chats-label-mobile');
+  if (label) label.textContent = t('chats');
+  const btn = document.querySelector('.new-chat-btn-mobile');
+  if (btn) btn.innerHTML = `<i class="ti ti-plus"></i> ${t('new_chat')}`;
+  const input = document.getElementById('text-input-mobile');
+  if (input) input.placeholder = t('input_placeholder');
+  const inputD = document.getElementById('text-input');
+  if (inputD) inputD.placeholder = t('input_placeholder');
+  const w = document.querySelector('.welcome-mobile');
+  if (w) {
+    const h = w.querySelector('h2'); if (h) h.textContent = t('welcome_title');
+    const p = w.querySelector('p'); if (p) p.textContent = t('welcome_desc');
+  }
+  const wd = document.querySelector('.welcome');
+  if (wd) {
+    const h = wd.querySelector('h2'); if (h) h.textContent = t('welcome_title');
+    const p = wd.querySelector('p'); if (p) p.textContent = t('welcome_desc');
+  }
+  localStorage.setItem('coockie_mobile_lang', currentLang);
+}
 
 // ============================================================
-// 1. ВБУДОВАНИЙ API КЛЮЧ
+// 2. API KEY
 // ============================================================
 const apiKey = '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';
 
 // ============================================================
-// 2. ВИПРАВЛЕННЯ ІЄРОГЛІФІВ
+// 3. ІЄРОГЛІФИ
 // ============================================================
-
 function fixBrokenUnicode(text) {
   if (!text) return text;
   const fixes = {
-    'Ð': 'Є', 'Ñ': 'Ї',
-    'Ð²': 'в', 'Ð³': 'г', 'Ð´': 'д', 'Ðµ': 'е', 'Ð¶': 'ж',
-    'Ð·': 'з', 'Ð¸': 'и', 'Ð¹': 'й', 'Ðº': 'к', 'Ð»': 'л',
-    'Ð¼': 'м', 'Ð½': 'н', 'Ð¾': 'о', 'Ð¿': 'п', 'Ñ': 'р',
-    'Ñ': 'с', 'Ñ': 'т', 'Ñ': 'у', 'Ñ': 'ф', 'Ñ': 'х',
-    'Ñ': 'ц', 'Ñ': 'ч', 'Ñ': 'ш', 'Ñ': 'щ', 'Ñ': 'ь',
-    'Ñ': 'ю', 'Ñ': 'я', 'Ð°': 'а', 'Ð±': 'б', 'Ñ': 'і',
-    'Ñ': 'ї', 'Ñ': 'є', 'Ð': 'А', 'Ð': 'Б', 'Ð': 'В',
-    'Ð': 'Г', 'Ð': 'Д', 'Ð': 'Е', 'Ð': 'Ж', 'Ð': 'З',
-    'Ð': 'И', 'Ð': 'Й', 'Ð': 'К', 'Ð': 'Л', 'Ð': 'М',
-    'Ð': 'Н', 'Ð': 'О', 'Ð': 'П', 'Ð¡': 'С', 'Ð¢': 'Т',
-    'Ð£': 'У', 'Ð¤': 'Ф', 'Ð¥': 'Х', 'Ð¦': 'Ц', 'Ð§': 'Ч',
-    'Ð¨': 'Ш', 'Ð©': 'Щ', 'Ðª': 'Ъ', 'Ð«': 'Ы', 'Ð¬': 'Ь',
-    'Ð­': 'Э', 'Ð®': 'Ю', 'Ð¯': 'Я', 'Ñ': 'р', 'Ñ': 'с',
-    'Ñ': 'т', 'Ñ': 'у', 'Ñ': 'ф', 'Ñ': 'х', 'Ñ': 'ц',
-    'Ñ': 'ч', 'Ñ': 'ш', 'Ñ': 'щ', 'Ñ': 'ъ', 'Ñ': 'ы',
-    'Ñ': 'ь', 'Ñ': 'э', 'Ñ': 'ю', 'Ñ': 'я'
+    'Ð': 'Є', 'Ñ': 'Ї', 'Ð²': 'в', 'Ð³': 'г', 'Ð´': 'д', 'Ðµ': 'е', 'Ð¶': 'ж',
+    'Ð·': 'з', 'Ð¸': 'и', 'Ð¹': 'й', 'Ðº': 'к', 'Ð»': 'л', 'Ð¼': 'м', 'Ð½': 'н',
+    'Ð¾': 'о', 'Ð¿': 'п', 'Ñ': 'р', 'Ñ': 'с', 'Ñ': 'т', 'Ñ': 'у', 'Ñ': 'ф',
+    'Ñ': 'х', 'Ñ': 'ц', 'Ñ': 'ч', 'Ñ': 'ш', 'Ñ': 'щ', 'Ñ': 'ь', 'Ñ': 'ю',
+    'Ñ': 'я', 'Ð°': 'а', 'Ð±': 'б', 'Ñ': 'і', 'Ñ': 'ї', 'Ñ': 'є',
+    'Ð': 'А', 'Ð': 'Б', 'Ð': 'В', 'Ð': 'Г', 'Ð': 'Д', 'Ð': 'Е', 'Ð': 'Ж',
+    'Ð': 'З', 'Ð': 'И', 'Ð': 'Й', 'Ð': 'К', 'Ð': 'Л', 'Ð': 'М', 'Ð': 'Н',
+    'Ð': 'О', 'Ð': 'П', 'Ð¡': 'С', 'Ð¢': 'Т', 'Ð£': 'У', 'Ð¤': 'Ф', 'Ð¥': 'Х',
+    'Ð¦': 'Ц', 'Ð§': 'Ч', 'Ð¨': 'Ш', 'Ð©': 'Щ', 'Ðª': 'Ъ', 'Ð«': 'Ы', 'Ð¬': 'Ь',
+    'Ð­': 'Э', 'Ð®': 'Ю', 'Ð¯': 'Я', 'Ñ': 'р', 'Ñ': 'с', 'Ñ': 'т', 'Ñ': 'у',
+    'Ñ': 'ф', 'Ñ': 'х', 'Ñ': 'ц', 'Ñ': 'ч', 'Ñ': 'ш', 'Ñ': 'щ', 'Ñ': 'ъ',
+    'Ñ': 'ы', 'Ñ': 'ь', 'Ñ': 'э', 'Ñ': 'ю', 'Ñ': 'я'
   };
   try { text = text.normalize('NFC'); } catch(e) {}
   for (const [bad, good] of Object.entries(fixes)) {
@@ -421,40 +600,29 @@ function sanitizeText(text) {
 }
 
 // ============================================================
-// 3. АВТОВИЗНАЧЕННЯ МОВИ
+// 4. МОВА
 // ============================================================
-
-const WARNING_MESSAGES_UK = [
-  "⚠️ Я відповідаю українською. Ось моя відповідь:",
-  "⚠️ Я не спілкуюся російською. Відповідаю українською:",
-  "⚠️ Я не розмовляю російською. Відповідаю українською:"
-];
-
-function getRandomWarning() {
-  return WARNING_MESSAGES_UK[Math.floor(Math.random() * WARNING_MESSAGES_UK.length)];
-}
-
 function detectLanguage(text) {
   text = sanitizeText(text);
   if (!text) return 'en';
   const ukrLetters = /[іїєґ]/i;
-  const rusOnlyLetters = /[ёыъэ]/i;
+  const rusOnly = /[ёыъэ]/i;
   const cyrillic = /[а-яёіїєґ]/i;
-  const ukrBaseWords = ['привіт', 'добрий', 'дякую', 'спасибі', 'будь', 'ласка', 'вибач', 'допоможи', 'скажи', 'розкажи', 'поясни', 'напиши', 'зроби'];
-  const rusBaseWords = ['привет', 'добрый', 'спасибо', 'пожалуйста', 'извини', 'помоги', 'скажи', 'расскажи', 'объясни', 'напиши', 'сделай'];
+  const ukrWords = ['привіт', 'добрий', 'дякую', 'спасибі', 'будь', 'ласка', 'вибач'];
+  const rusWords = ['привет', 'добрый', 'спасибо', 'пожалуйста', 'извини'];
   let ukrScore = 0, rusScore = 0;
-  let hasUkrLetters = false, hasRusOnlyLetters = false;
-  for (const char of text) {
-    if (ukrLetters.test(char)) { hasUkrLetters = true; ukrScore += 2; }
-    if (rusOnlyLetters.test(char)) { hasRusOnlyLetters = true; rusScore += 2; }
+  let hasUkr = false, hasRusOnly = false;
+  for (const ch of text) {
+    if (ukrLetters.test(ch)) { hasUkr = true; ukrScore += 2; }
+    if (rusOnly.test(ch)) { hasRusOnly = true; rusScore += 2; }
   }
   const words = text.toLowerCase().split(/\s+/).filter(w => w.length > 2);
-  for (const word of words) {
-    if (ukrBaseWords.some(w => word.includes(w))) ukrScore += 1.5;
-    if (rusBaseWords.some(w => word.includes(w))) rusScore += 1.5;
+  for (const w of words) {
+    if (ukrWords.some(x => w.includes(x))) ukrScore += 1.5;
+    if (rusWords.some(x => w.includes(x))) rusScore += 1.5;
   }
-  if (hasUkrLetters) return 'uk';
-  if (hasRusOnlyLetters && !hasUkrLetters) return 'ru';
+  if (hasUkr) return 'uk';
+  if (hasRusOnly && !hasUkr) return 'ru';
   if (ukrScore > rusScore && ukrScore > 0) return 'uk';
   if (rusScore > ukrScore && rusScore > 0) return 'ru';
   if (cyrillic.test(text)) {
@@ -473,174 +641,126 @@ function isRussian(text) {
   return detectLanguage(text) === 'ru';
 }
 
-function getSystemPromptForLanguage(langCode) {
+function getSystemPrompt(lang) {
   const prompts = {
-    uk: 'Відповідай українською.',
-    pl: 'Odpowiadaj po polsku.',
-    de: 'Antworte auf Deutsch.',
-    fr: 'Réponds en français.',
-    es: 'Responde en español.',
-    en: 'Answer in English.'
+    uk: 'Відповідай українською.', en: 'Answer in English.', pl: 'Odpowiadaj po polsku.',
+    de: 'Antworte auf Deutsch.', fr: 'Réponds en français.', es: 'Responde en español.'
   };
-  return prompts[langCode] || prompts.en;
+  return prompts[lang] || prompts.en;
 }
 
-// ============================================================
-// 4. ПОШУК
-// ============================================================
+const WARNINGS = [
+  "⚠️ Я відповідаю українською. Ось моя відповідь:",
+  "⚠️ Я не спілкуюся російською. Відповідаю українською:"
+];
+function getWarning() { return WARNINGS[Math.floor(Math.random() * WARNINGS.length)]; }
 
-const searchCache = new Map();
+// ============================================================
+// 5. ПОШУК
+// ============================================================
+const cache = new Map();
 
-async function searchDuckDuckGo(query) {
-  const cacheKey = 'ddg_' + query.toLowerCase().trim();
-  if (searchCache.has(cacheKey)) {
-    const cached = searchCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < 3600000) return cached.data;
-  }
+async function searchDDG(q) {
+  const key = 'ddg_' + q.trim().toLowerCase();
+  if (cache.has(key)) { const c = cache.get(key); if (Date.now() - c.ts < 3600000) return c.data; }
   try {
-    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('DDG error');
-    const data = await response.json();
-    const results = [];
-    if (data.AbstractText) results.push({ title: data.Heading || 'Результат', snippet: data.AbstractText, url: data.AbstractURL || '#' });
-    if (data.RelatedTopics) {
-      data.RelatedTopics.forEach(topic => {
-        if (topic.Text && topic.Text.length > 10) {
-          const parts = topic.Text.split(' - ');
-          results.push({ title: parts[0] || 'Пов\'язане', snippet: parts.slice(1).join(' - ') || topic.Text, url: topic.FirstURL || '#' });
+    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(q)}&format=json&no_html=1&skip_disambig=1`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('DDG error');
+    const d = await r.json();
+    const res = [];
+    if (d.AbstractText) res.push({ title: d.Heading || 'Result', snippet: d.AbstractText, url: d.AbstractURL || '#' });
+    if (d.RelatedTopics) {
+      d.RelatedTopics.forEach(t => {
+        if (t.Text && t.Text.length > 10) {
+          const parts = t.Text.split(' - ');
+          res.push({ title: parts[0] || 'Related', snippet: parts.slice(1).join(' - ') || t.Text, url: t.FirstURL || '#' });
         }
       });
     }
-    searchCache.set(cacheKey, { data: results, timestamp: Date.now() });
-    return results;
+    cache.set(key, { data: res, ts: Date.now() });
+    return res;
   } catch (e) { return []; }
 }
 
-async function searchQwant(query) {
-  const cacheKey = 'qw_' + query.toLowerCase().trim();
-  if (searchCache.has(cacheKey)) {
-    const cached = searchCache.get(cacheKey);
-    if (Date.now() - cached.timestamp < 3600000) return cached.data;
-  }
+async function searchQwant(q) {
+  const key = 'qw_' + q.trim().toLowerCase();
+  if (cache.has(key)) { const c = cache.get(key); if (Date.now() - c.ts < 3600000) return c.data; }
   try {
-    const url = `https://api.qwant.com/v3/search/web?q=${encodeURIComponent(query)}&count=10&locale=uk_UA&safesearch=1`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error('Qwant error');
-    const data = await response.json();
-    const results = [];
-    if (data.status === 'success' && data.data?.result?.items) {
-      data.data.result.items.forEach(item => {
-        results.push({
+    const url = `https://api.qwant.com/v3/search/web?q=${encodeURIComponent(q)}&count=10&locale=uk_UA&safesearch=1`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('Qwant error');
+    const d = await r.json();
+    const res = [];
+    if (d.status === 'success' && d.data?.result?.items) {
+      d.data.result.items.forEach(item => {
+        res.push({
           title: item.title.replace(/<[^>]*>/g, ''),
           snippet: item.desc.replace(/<[^>]*>/g, ''),
           url: item.url
         });
       });
     }
-    searchCache.set(cacheKey, { data: results, timestamp: Date.now() });
-    return results;
+    cache.set(key, { data: res, ts: Date.now() });
+    return res;
   } catch (e) { return []; }
 }
 
-async function searchWeb(query) {
-  let results = await searchDuckDuckGo(query);
-  if (!results || results.length < 3) {
-    const qwantResults = await searchQwant(query);
+async function searchWeb(q) {
+  let r = await searchDDG(q);
+  if (!r || r.length < 3) {
+    const qr = await searchQwant(q);
     const seen = new Set();
-    const combined = [...results, ...qwantResults];
-    const unique = combined.filter(r => {
-      const key = r.url;
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-    results = unique;
+    const combined = [...r, ...qr];
+    r = combined.filter(x => { const k = x.url; if (seen.has(k)) return false; seen.add(k); return true; });
   }
-  return results;
+  return r;
 }
 
-function needsInternetSearch(query) {
-  const patterns = [
-    /сьогодн/i, /зараз/i, /новин/i, /актуальн/i, /останн/i,
-    /поточн/i, /свіж/i, /202[4-9]/i, /погод/i, /курс\s+(валюти|долару)/i,
-    /знайди/i, /пошук/i, /перевір/i, /дізнайся/i, /україн/i
-  ];
-  return patterns.some(p => p.test(query));
+function needSearch(q) {
+  const p = [/сьогодн/i,/зараз/i,/новин/i,/актуальн/i,/останн/i,/свіж/i,/202[4-9]/i,/погод/i,/курс/i,/знайди/i,/пошук/i,/перевір/i,/дізнайся/i];
+  return p.some(x => x.test(q));
 }
 
 // ============================================================
-// 5. ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ
+// 6. ЗОБРАЖЕННЯ
 // ============================================================
-function isImageRequest(query) {
-  const patterns = [/намалюй/i, /згенеруй/i, /створи\s+(зображення|картинку)/i, /draw\s+me/i];
-  return patterns.some(p => p.test(query));
+function isImage(q) {
+  return /намалюй|згенеруй|створи\s+(зображення|картинку)|draw\s+me/i.test(q);
 }
-
-function extractImagePrompt(query) {
-  return query.replace(/намалюй\s*/i, '').replace(/згенеруй\s*(зображення|картинку|малюнок|фото)?\s*/i, '').trim();
+function extractPrompt(q) {
+  return q.replace(/намалюй\s*/i, '').replace(/згенеруй\s*(зображення|картинку|малюнок|фото)?\s*/i, '').trim();
 }
-
-function buildImageUrl(prompt) {
-  const encoded = encodeURIComponent(prompt);
-  return `https://image.pollinations.ai/prompt/${encoded}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`;
-}
-
-function addImageBubble(bubble, prompt) {
-  const wrap = document.createElement('div');
-  wrap.className = 'gen-image-wrap';
-  wrap.innerHTML = `<div class="img-generating"><div class="typing"><span></span><span></span><span></span></div> Генерую...</div>`;
-  bubble.appendChild(wrap);
-  scrollBot();
-
-  const img = new Image();
-  const url = buildImageUrl(prompt);
-  img.onload = () => {
-    wrap.innerHTML = `<img src="${url}" alt="${esc(prompt)}"><div class="img-caption">🎨 ${esc(prompt.slice(0,60))}</div>`;
-    scrollBot();
-  };
-  img.onerror = () => {
-    wrap.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">⚠️ Помилка генерації</div>`;
-  };
-  img.src = url;
+function imgUrl(p) {
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(p)}?width=512&height=512&nologo=true&seed=${Math.floor(Math.random()*99999)}`;
 }
 
 // ============================================================
-// 6. КОД
+// 7. КОД
 // ============================================================
-
 function renderCodeBlock(code, lang) {
   const id = 'cb_' + Math.random().toString(36).slice(2);
-  const isRunnableHTML = ['html', 'javascript', 'js', 'css'].includes((lang || '').toLowerCase());
-  const isRunnablePython = (lang || '').toLowerCase() === 'python';
-  const safeCode = esc(code);
-  const langLabel = lang || 'code';
-
-  let actionsHtml = `<button onclick="copyCode('${id}')"><i class="ti ti-copy" style="font-size:10px;"></i></button>`;
-  if (isRunnableHTML) {
-    actionsHtml += `<button onclick="runCode('${id}', \`${code.replace(/`/g, '\\`')}\`)"><i class="ti ti-player-play" style="font-size:10px;"></i></button>`;
-  }
-  if (isRunnablePython) {
-    actionsHtml += `<button onclick="runPython('${id}')"><i class="ti ti-brand-python" style="font-size:10px;"></i></button>`;
-  }
-
+  const isRunnable = ['html','javascript','js','css'].includes((lang||'').toLowerCase());
+  const isPy = (lang||'').toLowerCase() === 'python';
+  const safe = esc(code);
+  const label = lang || 'code';
+  let actions = `<button onclick="copyCodeM('${id}')"><i class="ti ti-copy" style="font-size:9px;"></i></button>`;
+  if (isRunnable) actions += `<button onclick="runCodeM('${id}', \`${code.replace(/`/g,'\\`')}\`)"><i class="ti ti-player-play" style="font-size:9px;"></i></button>`;
+  if (isPy) actions += `<button onclick="runPythonM('${id}')"><i class="ti ti-brand-python" style="font-size:9px;"></i></button>`;
   return `<div class="code-block" id="${id}">
-    <div class="code-header">
-      <span class="lang">${langLabel}</span>
-      <div class="code-actions">${actionsHtml}</div>
-    </div>
-    <pre><code class="hljs language-${langLabel}">${safeCode}</code></pre>
+    <div class="code-header"><span class="lang">${label}</span><div class="code-actions">${actions}</div></div>
+    <pre><code class="hljs language-${label}">${safe}</code></pre>
   </div>`;
 }
 
-function copyCode(id) {
+function copyCodeM(id) {
   const el = document.getElementById(id);
   if (!el) return;
   const code = el.querySelector('pre code').textContent;
-  navigator.clipboard.writeText(code).then(() => showToast('✅ Скопійовано')).catch(() => showToast('❌ Помилка'));
+  navigator.clipboard.writeText(code).then(() => toast('✅ Скопійовано')).catch(() => toast('❌ Помилка'));
 }
 
-function runCode(id, code) {
+function runCodeM(id, code) {
   const el = document.getElementById(id);
   if (!el) return;
   let existing = el.nextElementSibling;
@@ -653,260 +773,379 @@ function runCode(id, code) {
   el.insertAdjacentElement('afterend', preview);
   const doc = iframe.contentDocument || iframe.contentWindow.document;
   doc.open(); doc.write(code); doc.close();
-  scrollBot();
+  scrollChat();
 }
 
 let pyodideReady = false;
 let pyodideInstance = null;
 
-async function runPython(id) {
+async function runPythonM(id) {
   const el = document.getElementById(id);
   if (!el) return;
   const code = el.querySelector('pre code').textContent;
-
   try {
     if (!pyodideReady) {
-      showToast('⏳ Завантаження Python...');
+      toast('⏳ Завантаження Python...');
       pyodideInstance = await loadPyodide();
       pyodideReady = true;
-      showToast('✅ Python готовий');
+      toast('✅ Python готовий');
     }
-
-    showToast('⏳ Виконання...');
+    toast('⏳ Виконання...');
     const result = await pyodideInstance.runPythonAsync(code);
-    showToast('✅ Готово');
-
+    toast('✅ Готово');
     let existing = el.nextElementSibling;
     if (existing && existing.classList.contains('run-preview')) existing.remove();
     const preview = document.createElement('div');
     preview.className = 'run-preview';
-    preview.style.cssText = 'padding: 10px; background: var(--bg-main); color: var(--text); border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap;';
+    preview.style.cssText = 'padding: 8px; background: var(--bg-main); color: var(--text); border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre-wrap;';
     preview.textContent = result || '✅ Виконано';
     el.insertAdjacentElement('afterend', preview);
-    scrollBot();
+    scrollChat();
   } catch (e) {
-    showToast('❌ Помилка');
+    toast('❌ ' + e.message);
     let existing = el.nextElementSibling;
     if (existing && existing.classList.contains('run-preview')) existing.remove();
     const preview = document.createElement('div');
     preview.className = 'run-preview';
-    preview.style.cssText = 'padding: 10px; background: #fef2f2; color: #991b1b; border-radius: 6px; font-family: monospace; font-size: 13px; white-space: pre-wrap;';
+    preview.style.cssText = 'padding: 8px; background: #fef2f2; color: #991b1b; border-radius: 6px; font-family: monospace; font-size: 12px; white-space: pre-wrap;';
     preview.textContent = '❌ ' + e.message;
     el.insertAdjacentElement('afterend', preview);
-    scrollBot();
+    scrollChat();
   }
 }
 
 // ============================================================
-// 7. ОСНОВНА ЛОГІКА
+// 8. ОСНОВНА ЛОГІКА
 // ============================================================
-const messagesEl = document.getElementById('messages');
-const textInput = document.getElementById('text-input');
-const sendBtn = document.getElementById('send-btn');
-const chatListEl = document.getElementById('chat-list');
-const topbarTitle = document.getElementById('topbar-title');
-
 let chats = [], activeChatId = null, loading = false;
+let currentView = 'chats';
+const isMobile = () => window.innerWidth <= 600;
 
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+
+function scrollChat() {
+  const container = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+  if (container) container.scrollTop = container.scrollHeight;
+}
 
 function fmt(text) {
   text = sanitizeText(text);
   if (!text) return '';
-
-  const codeBlocks = [];
+  const blocks = [];
   let h = text.replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) => {
-    const idx = codeBlocks.length;
-    codeBlocks.push({ lang: lang.trim(), code: code.trim() });
+    const idx = blocks.length;
+    blocks.push({ lang: lang.trim(), code: code.trim() });
     return `%%CODE_BLOCK_${idx}%%`;
   });
-
   h = esc(h);
   h = h.replace(/`([^`\n]+)`/g, '<code>$1</code>');
   h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  h = h.replace(/^#{1,3} (.+)$/gm, '<strong>$1</strong>');
   h = h.replace(/\n/g, '<br>');
-
-  codeBlocks.forEach((b, i) => {
+  blocks.forEach((b, i) => {
     h = h.replace(`%%CODE_BLOCK_${i}%%`, renderCodeBlock(b.code, b.lang));
   });
-
   setTimeout(() => {
-    document.querySelectorAll('.code-block pre code').forEach((el) => {
-      hljs.highlightElement(el);
-    });
+    const container = isMobile() ? '#messages-mobile' : '#messages';
+    document.querySelectorAll(`${container} .code-block pre code`).forEach(el => hljs.highlightElement(el));
   }, 50);
-
   return h;
 }
 
 function createChat(title) {
   const id = genId();
-  chats.push({ id, title: title || translations[currentLang]?.new_chat || 'Новий чат', messages: [], created: new Date().toISOString() });
-  activeChatId = id; renderList(); saveLocalChats(); return id;
+  chats.push({ id, title: title || t('new_chat'), messages: [], created: new Date().toISOString() });
+  activeChatId = id;
+  renderChatList();
+  saveChats();
+  return id;
 }
 
 function deleteChat(id) {
-  if (!confirm(translations[currentLang]?.delete_confirm || 'Видалити цей чат?')) return;
+  if (!confirm(t('delete_confirm'))) return;
   chats = chats.filter(c => c.id !== id);
   if (activeChatId === id) {
-    activeChatId = chats.length > 0 ? chats[chats.length - 1].id : null;
-    if (activeChatId) { const c = chats.find(c => c.id === activeChatId); topbarTitle.textContent = c.title; renderMsgs(c.messages); }
-    else { createChat(translations[currentLang]?.new_chat || 'Новий чат'); showWelcome(); }
+    activeChatId = chats.length > 0 ? chats[chats.length-1].id : null;
+    if (activeChatId) {
+      const c = chats.find(x => x.id === activeChatId);
+      if (c) { updateTitle(c.title); renderMsgs(c.messages); }
+    } else { createChat(t('new_chat')); showWelcome(); }
   }
-  renderList(); saveLocalChats();
+  renderChatList();
+  saveChats();
 }
 
-function renderList() {
-  chatListEl.innerHTML = '';
+function renderChatList() {
+  const list = document.getElementById('chat-list');
+  const listMobile = document.getElementById('chat-list-mobile');
+  const render = (container) => {
+    if (!container) return;
+    container.innerHTML = '';
+    if (!chats.length) {
+      container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-hint);font-size:13px;">${t('no_chats')}</div>`;
+      return;
+    }
+    [...chats].reverse().forEach(c => {
+      const div = document.createElement('div');
+      div.className = 'chat-item';
+      const lastMsg = c.messages.length ? c.messages[c.messages.length-1].text.slice(0, 60) : '';
+      div.innerHTML = `
+        <i class="ti ti-message"></i>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(c.title)}</span>
+        <span class="delete-chat" data-id="${c.id}">✕</span>
+      `;
+      div.addEventListener('click', () => {
+        activeChatId = c.id;
+        updateTitle(c.title);
+        renderMsgs(c.messages);
+        if (isMobile()) showChatScreen();
+      });
+      const del = div.querySelector('.delete-chat');
+      del.addEventListener('click', (e) => { e.stopPropagation(); deleteChat(c.id); });
+      container.appendChild(div);
+    });
+  };
+  render(document.getElementById('chat-list'));
+  render(document.getElementById('chat-list-mobile'));
+}
+
+function renderChatListMobile() {
+  const container = document.getElementById('chat-list-mobile');
+  if (!container) return;
+  container.innerHTML = '';
+  if (!chats.length) {
+    container.innerHTML = `<div style="padding:20px;text-align:center;color:var(--text-hint);font-size:13px;">${t('no_chats')}</div>`;
+    return;
+  }
   [...chats].reverse().forEach(c => {
-    const el = document.createElement('div');
-    el.className = 'chat-item' + (c.id === activeChatId ? ' active' : '');
-    el.innerHTML = `<i class="ti ti-message" aria-hidden="true"></i>${esc(c.title)}`;
-    el.onclick = () => { activeChatId = c.id; topbarTitle.textContent = c.title; renderMsgs(c.messages); renderList(); };
-    const del = document.createElement('span');
-    del.className = 'delete-chat'; del.innerHTML = '✕';
-    del.onclick = e => { e.stopPropagation(); deleteChat(c.id); };
-    el.appendChild(del); chatListEl.appendChild(el);
+    const div = document.createElement('div');
+    div.className = 'chat-item-mobile';
+    const lastMsg = c.messages.length ? c.messages[c.messages.length-1].text.slice(0, 60) : '';
+    const time = c.messages.length ? new Date(c.messages[c.messages.length-1].time || Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : '';
+    div.innerHTML = `
+      <div class="avatar"><span class="cookie-emoji">🍪</span></div>
+      <div class="info">
+        <div class="name">${esc(c.title)}</div>
+        <div class="preview">${esc(lastMsg) || 'Нове повідомлення'}</div>
+      </div>
+      <div class="time">${time}</div>
+      <button class="delete-chat-mobile" data-id="${c.id}"><i class="ti ti-x"></i></button>
+    `;
+    div.addEventListener('click', () => {
+      activeChatId = c.id;
+      updateTitle(c.title);
+      renderMsgs(c.messages);
+      showChatScreen();
+    });
+    const del = div.querySelector('.delete-chat-mobile');
+    del.addEventListener('click', (e) => { e.stopPropagation(); deleteChat(c.id); });
+    container.appendChild(div);
   });
 }
 
+function updateTitle(title) {
+  const el = document.getElementById('topbar-title');
+  const elM = document.getElementById('topbar-title-mobile');
+  if (el) el.textContent = title;
+  if (elM) elM.textContent = title;
+}
+
 function showWelcome() {
-  const t = translations[currentLang] || translations.uk;
-  messagesEl.innerHTML = `<div class="welcome">
-    <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="22" fill="#C4853A"/>
-      <circle cx="16" cy="18" r="2.5" fill="#3B1F0A" opacity="0.85"/>
-      <circle cx="27" cy="16" r="2" fill="#3B1F0A" opacity="0.85"/>
-      <circle cx="31" cy="25" r="2.3" fill="#3B1F0A" opacity="0.85"/>
-      <circle cx="20" cy="30" r="2" fill="#3B1F0A" opacity="0.85"/>
-    </svg>
-    <h2>${t.welcome_title}</h2>
-    <p>${t.welcome_desc}</p>
+  const container = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+  if (!container) return;
+  container.innerHTML = `<div class="${isMobile() ? 'welcome-mobile' : 'welcome'}">
+    <div style="font-size:48px;">🍪</div>
+    <h2>${t('welcome_title')}</h2>
+    <p>${t('welcome_desc')}</p>
   </div>`;
 }
 
 function renderMsgs(msgs) {
+  const container = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+  if (!container) return;
   if (!msgs || !msgs.length) { showWelcome(); return; }
-  messagesEl.innerHTML = '';
-  msgs.forEach(m => addBubble(m.role, m.text, m.imagePrompt, false));
-  scrollBot();
+  container.innerHTML = '';
+  msgs.forEach(m => addBubble(container, m.role, m.text, m.imagePrompt, false));
+  scrollChat();
 }
 
-function addBubble(role, text, imagePrompt, scroll = true) {
+function addBubble(container, role, text, imagePrompt, scroll = true) {
+  if (!container) return;
   const wrap = document.createElement('div');
-  wrap.className = 'msg ' + role;
+  wrap.className = isMobile() ? `msg-mobile ${role}` : `msg ${role}`;
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   const bt = document.createElement('span');
   bt.innerHTML = fmt(text);
   bubble.appendChild(bt);
 
-  if (imagePrompt && role === 'ai') addImageBubble(bubble, imagePrompt);
+  if (imagePrompt && role === 'ai') {
+    const imgWrap = document.createElement('div');
+    imgWrap.className = 'gen-image-wrap';
+    imgWrap.innerHTML = `<div class="img-generating"><div class="typing"><span></span><span></span><span></span></div> Генерую...</div>`;
+    bubble.appendChild(imgWrap);
+    const img = new Image();
+    const url = imgUrl(imagePrompt);
+    img.onload = () => {
+      imgWrap.innerHTML = `<img src="${url}" alt="${esc(imagePrompt)}"><div class="img-caption">🎨 ${esc(imagePrompt.slice(0,60))}</div>`;
+      scrollChat();
+    };
+    img.onerror = () => { imgWrap.innerHTML = `<div style="color:var(--text-muted);font-size:12px;">⚠️ Помилка генерації</div>`; };
+    img.src = url;
+  }
 
-  wrap.innerHTML = `<div class="avatar ${role}">${role === 'ai' ? '🍪' : '👤'}</div>`;
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar';
+  avatar.innerHTML = `<span class="cookie-emoji">🍪</span>`;
+  if (role === 'user') {
+    avatar.innerHTML = `<span style="font-size:14px;">👤</span>`;
+  }
+
+  wrap.appendChild(avatar);
   wrap.appendChild(bubble);
-  messagesEl.appendChild(wrap);
-  if (scroll) scrollBot();
+  container.appendChild(wrap);
+  if (scroll) scrollChat();
 }
 
 function showTyping() {
-  const w = document.createElement('div'); w.className = 'msg ai'; w.id = 'typ';
-  w.innerHTML = `<div class="avatar ai">🍪</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
-  messagesEl.appendChild(w); scrollBot();
+  const container = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+  if (!container) return;
+  const w = document.createElement('div');
+  w.className = isMobile() ? 'msg-mobile ai' : 'msg ai';
+  w.id = 'typ';
+  const avatar = document.createElement('div');
+  avatar.className = 'avatar typing';
+  avatar.innerHTML = `<span class="cookie-emoji">🍪</span>`;
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  bubble.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  w.appendChild(avatar);
+  w.appendChild(bubble);
+  container.appendChild(w);
+  scrollChat();
 }
-function rmTyping() { const e = document.getElementById('typ'); if (e) e.remove(); }
-function scrollBot() { messagesEl.scrollTop = messagesEl.scrollHeight; }
-function saveLocalChats() { localStorage.setItem('coockie_chats', JSON.stringify(chats)); }
 
-function loadLocalChats() {
-  try { chats = JSON.parse(localStorage.getItem('coockie_chats') || '[]'); if (!Array.isArray(chats)) chats = []; } catch (e) { chats = []; }
-  if (chats.length === 0) { createChat(translations[currentLang]?.new_chat || 'Новий чат'); showWelcome(); return; }
-  renderList();
-  activeChatId = chats[chats.length - 1].id;
-  const chat = chats.find(c => c.id === activeChatId);
-  if (chat) { topbarTitle.textContent = chat.title; renderMsgs(chat.messages); }
+function rmTyping() {
+  const el = document.getElementById('typ');
+  if (el) {
+    // Додаємо анімацію повернення перед видаленням
+    const avatar = el.querySelector('.avatar');
+    if (avatar) {
+      avatar.classList.remove('typing');
+      avatar.classList.add('done');
+      setTimeout(() => {
+        avatar.classList.remove('done');
+        el.remove();
+      }, 700);
+    } else {
+      el.remove();
+    }
+  }
+}
+
+function showChatScreen() {
+  document.getElementById('chat-list-screen-mobile').style.display = 'none';
+  document.getElementById('chat-screen-mobile').classList.add('active');
+  document.getElementById('chat-screen-mobile').style.display = 'flex';
+  document.getElementById('back-btn').style.display = 'flex';
+  currentView = 'chat';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-chat').classList.add('active');
+}
+
+function showChatListScreen() {
+  document.getElementById('chat-list-screen-mobile').style.display = 'flex';
+  document.getElementById('chat-screen-mobile').classList.remove('active');
+  document.getElementById('chat-screen-mobile').style.display = 'none';
+  document.getElementById('back-btn').style.display = 'none';
+  currentView = 'chats';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('nav-chats').classList.add('active');
+  renderChatListMobile();
+}
+
+function saveChats() {
+  localStorage.setItem('coockie_mobile_chats', JSON.stringify(chats));
+}
+
+function loadChats() {
+  try {
+    const d = localStorage.getItem('coockie_mobile_chats');
+    chats = d ? JSON.parse(d) : [];
+    if (!Array.isArray(chats)) chats = [];
+  } catch(e) { chats = []; }
+  if (!chats.length) { createChat(t('new_chat')); showWelcome(); }
+  renderChatList();
+  renderChatListMobile();
+  activeChatId = chats[chats.length-1]?.id || null;
+  if (activeChatId) {
+    const c = chats.find(x => x.id === activeChatId);
+    if (c) { updateTitle(c.title); renderMsgs(c.messages); }
+  }
 }
 
 // ============================================================
-// 8. ВІДПРАВКА
+// 9. ВІДПРАВКА
 // ============================================================
-async function send() {
-  const text = textInput.value.trim();
+async function sendMessage() {
+  const input = isMobile() ? document.getElementById('text-input-mobile') : document.getElementById('text-input');
+  const text = input ? input.value.trim() : '';
   if (!text || loading) return;
 
-  const detectedLang = detectLanguage(text);
+  const lang = detectLanguage(text);
   const isRus = isRussian(text);
 
   if (!activeChatId) createChat(text.slice(0, 30));
   const chat = chats.find(c => c.id === activeChatId);
   if (!chat) return;
 
-  const imgRequest = isImageRequest(text);
-  const imgPrompt = imgRequest ? extractImagePrompt(text) : null;
+  const imgReq = isImage(text);
+  const imgPrompt = imgReq ? extractPrompt(text) : null;
 
-  chat.messages.push({ role: 'user', text });
-  if (chat.messages.length === 1) { chat.title = text.slice(0, 32); topbarTitle.textContent = chat.title; renderList(); }
+  chat.messages.push({ role: 'user', text, time: Date.now() });
+  if (chat.messages.length === 1) { chat.title = text.slice(0, 32); updateTitle(chat.title); renderChatList(); renderChatListMobile(); }
 
-  addBubble('user', text, null);
-  textInput.value = ''; textInput.style.height = '';
-  loading = true; sendBtn.disabled = true; showTyping();
+  const container = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+  addBubble(container, 'user', text, null);
+  if (input) { input.value = ''; input.style.height = ''; }
+  loading = true;
+  const sendBtn = isMobile() ? document.getElementById('send-btn-mobile') : document.getElementById('send-btn');
+  if (sendBtn) sendBtn.disabled = true;
+  showTyping();
 
   try {
-    let searchContext = '';
-    let searchResults = [];
-
-    if (needsInternetSearch(text)) {
-      searchResults = await searchWeb(text);
-      if (searchResults.length > 0) {
-        searchContext = '\n\nАктуальна інформація:\n' +
-          searchResults.slice(0, 4).map((r, i) =>
-            `${i + 1}. ${r.title}\n   ${r.snippet.slice(0, 300)}`
-          ).join('\n');
-        const sources = searchResults.slice(0, 3).map(r => r.url).filter(u => u && u !== '#');
-        if (sources.length > 0) searchContext += '\n\nДжерела: ' + sources.join(', ');
+    let ctx = '';
+    let results = [];
+    if (needSearch(text)) {
+      results = await searchWeb(text);
+      if (results.length) {
+        ctx = '\n\nАктуальна інформація:\n' +
+          results.slice(0, 4).map((r, i) => `${i+1}. ${r.title}\n   ${r.snippet.slice(0, 300)}`).join('\n');
+        const src = results.slice(0, 3).map(r => r.url).filter(u => u && u !== '#');
+        if (src.length) ctx += '\n\nДжерела: ' + src.join(', ');
       }
     }
 
-    const basePrompt = `Ти досвідчений програміст.
+    const base = `Ти досвідчений програміст.
+Стиль: відповідай чітко, по суті, без зайвих слів. Код: коротко поясни ідею (1-2 речення), покажи код з коментарями, додай складність.
+Мова: ${getSystemPrompt(lang)}`;
 
-Стиль:
-- Відповідай чітко, по суті, без зайвих слів
-- Не рекламуй свої навички — просто роби свою роботу
-- Розгорнуто відповідай тільки тоді, коли тема складна або цього просять
+    const sys = base + (ctx ? '\n\nІнформація з пошуку:\n' + ctx : '');
 
-Код:
-1. Коротко поясни ідею (1-2 речення)
-2. Покажи код з коментарями
-3. Додай складність алгоритму (якщо доречно)
-
-Мова: ${getSystemPromptForLanguage(detectedLang)}`;
-
-    const systemPrompt = basePrompt + (searchContext ? '\n\nІнформація з пошуку:\n' + searchContext : '');
-
-    const messages = [
-      { role: 'system', content: systemPrompt },
+    const msgs = [
+      { role: 'system', content: sys },
       ...chat.messages.map(m => ({ role: m.role === 'ai' ? 'assistant' : 'user', content: m.text }))
     ];
 
     if (isRus) {
-      messages.splice(1, 0, {
-        role: 'system',
-        content: `Відповідай українською. Спочатку напиши: "${getRandomWarning()}"`
-      });
+      msgs.splice(1, 0, { role: 'system', content: `Відповідай українською. Спочатку напиши: "${getWarning()}"` });
     }
 
     const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        max_tokens: 4096,
-        temperature: 0.7
-      })
+      body: JSON.stringify({ model: 'llama-3.3-70b-versatile', messages: msgs, max_tokens: 4096, temperature: 0.7 })
     });
 
     const data = await resp.json();
@@ -917,95 +1156,141 @@ async function send() {
     reply = sanitizeText(reply);
 
     if (isRus && !reply.includes('відповідаю') && !reply.includes('спілкуюся')) {
-      reply = getRandomWarning() + '\n\n' + reply;
+      reply = getWarning() + '\n\n' + reply;
     }
 
-    chat.messages.push({ role: 'ai', text: reply, imagePrompt: imgPrompt });
-    addBubble('ai', reply, imgPrompt);
-    saveLocalChats();
+    chat.messages.push({ role: 'ai', text: reply, imagePrompt: imgPrompt, time: Date.now() });
+    const container2 = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+    addBubble(container2, 'ai', reply, imgPrompt);
+    saveChats();
+    renderChatList();
+    renderChatListMobile();
 
   } catch (e) {
     rmTyping();
-    addBubble('ai', '⚠️ ' + esc(e.message));
+    const container2 = isMobile() ? document.getElementById('messages-mobile') : document.getElementById('messages');
+    addBubble(container2, 'ai', '⚠️ ' + esc(e.message), null);
   }
 
-  loading = false; sendBtn.disabled = false;
+  loading = false;
+  const sendBtn2 = isMobile() ? document.getElementById('send-btn-mobile') : document.getElementById('send-btn');
+  if (sendBtn2) sendBtn2.disabled = false;
 }
 
 // ============================================================
-// 9. ЕКСПОРТ / ІМПОРТ
+// 10. TOAST
 // ============================================================
-function showToast(msg) {
+function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg; el.classList.add('show');
   clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2500);
 }
 
-document.getElementById('export-btn').onclick = async function() {
-  if (!chats.length) { showToast(translations[currentLang]?.no_chats || '❌ Немає чатів'); return; }
-  try {
-    const zip = new JSZip();
-    zip.file('chats.json', JSON.stringify({ version: '1.0', exportedAt: new Date().toISOString(), chats }, null, 2));
-    chats.forEach(c => {
-      const name = c.title.replace(/[^a-z0-9]/gi, '_').slice(0, 30);
-      zip.file(`chats/${name}_${c.id}.json`, JSON.stringify(c, null, 2));
-    });
-    const blob = await zip.generateAsync({ type: 'blob' });
-    saveAs(blob, `coockie_chats_${new Date().toISOString().slice(0, 10)}.zip`);
-    showToast(translations[currentLang]?.exported || '✅ Чати експортовано');
-  } catch (e) { showToast('❌ ' + e.message); }
-};
+// ============================================================
+// 11. ДОНАТИ
+// ============================================================
+function showDonate() {
+  const w = { BTC: 'bc1qtjy3z933wp8060kk4242lnssv4wssxg3msyx0r', USDT: '0x508917633d32E8194562B7BDa654F8A05b6a2428' };
+  const msg = t('donate_text').replace('{btc}', w.BTC).replace('{usdt}', w.USDT);
+  alert(t('donate_title') + '\n\n' + msg);
+}
 
-document.getElementById('import-file').onchange = async function(e) {
-  const file = e.target.files[0]; if (!file) return;
-  try {
-    const zip = await JSZip.loadAsync(file);
-    const chatFile = zip.file('chats.json');
-    if (!chatFile) { showToast(translations[currentLang]?.invalid_format || '❌ Невірний формат'); return; }
-    const data = JSON.parse(await chatFile.async('text'));
-    if (!data.chats || !Array.isArray(data.chats)) { showToast(translations[currentLang]?.invalid_data || '❌ Невірні дані'); return; }
-    if (!confirm(translations[currentLang]?.import_confirm || `Знайдено ${data.chats.length} чатів. Імпортувати?`)) return;
-    chats = data.chats; saveLocalChats(); loadLocalChats();
-    showToast(translations[currentLang]?.imported || `✅ Імпортовано ${chats.length} чатів`);
-    this.value = '';
-  } catch (e) { showToast('❌ ' + e.message); this.value = ''; }
-};
+document.getElementById('donate-btn')?.addEventListener('click', showDonate);
+document.getElementById('donate-btn-mobile')?.addEventListener('click', showDonate);
 
 // ============================================================
-// 10. КРИПТО-ДОНАТИ
+// 12. НАВІГАЦІЯ
 // ============================================================
-document.getElementById('donate-btn')?.addEventListener('click', function(e) {
-  e.preventDefault();
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const tab = this.dataset.tab;
+    if (tab === 'chats') showChatListScreen();
+    else if (tab === 'chat') {
+      if (activeChatId) showChatScreen();
+      else { toast('Створіть новий чат'); }
+    } else if (tab === 'search') {
+      toast('🔍 Пошук у DuckDuckGo + Qwant');
+      const input = document.getElementById('text-input-mobile');
+      if (input) input.focus();
+    } else if (tab === 'settings') {
+      toast('⚙️ Мова: ' + getLangName(currentLang));
+    } else if (tab === 'support') {
+      showDonate();
+    }
+  });
+});
 
-  const wallet = {
-    BTC: 'bc1qtjy3z933wp8060kk4242lnssv4wssxg3msyx0r',
-    USDT: '0x508917633d32E8194562B7BDa654F8A05b6a2428'
-  };
+document.getElementById('back-btn')?.addEventListener('click', showChatListScreen);
 
-  const t = translations[currentLang] || translations.uk;
-  const msg = t.donate_text
-    .replace('{btc}', wallet.BTC)
-    .replace('{usdt}', wallet.USDT);
+// ============================================================
+// 13. МОВА
+// ============================================================
+document.getElementById('lang-select')?.addEventListener('change', function() {
+  currentLang = this.value;
+  applyTranslations();
+  toast(t('language_switched').replace('{lang}', getLangName(currentLang)));
+});
 
-  alert(t.donate_title + '\n\n' + msg);
+document.getElementById('lang-select-mobile')?.addEventListener('change', function() {
+  currentLang = this.value;
+  applyTranslations();
+  toast(t('language_switched').replace('{lang}', getLangName(currentLang)));
 });
 
 // ============================================================
-// 11. ОБРОБНИКИ
+// 14. ОБРОБНИКИ
 // ============================================================
-sendBtn.onclick = send;
-textInput.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-textInput.addEventListener('input', () => { textInput.style.height = ''; textInput.style.height = Math.min(textInput.scrollHeight, 100) + 'px'; });
-document.getElementById('new-chat-btn').onclick = () => { createChat(translations[currentLang]?.new_chat || 'Новий чат'); topbarTitle.textContent = translations[currentLang]?.new_chat || 'Новий чат'; showWelcome(); saveLocalChats(); };
+document.getElementById('send-btn')?.addEventListener('click', sendMessage);
+document.getElementById('send-btn-mobile')?.addEventListener('click', sendMessage);
+
+document.getElementById('text-input')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('text-input-mobile')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+
+document.getElementById('text-input')?.addEventListener('input', function() {
+  this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+});
+document.getElementById('text-input-mobile')?.addEventListener('input', function() {
+  this.style.height = ''; this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+});
+
+document.getElementById('new-chat-btn')?.addEventListener('click', () => {
+  const id = createChat(t('new_chat'));
+  const c = chats.find(x => x.id === id);
+  if (c) { updateTitle(c.title); renderMsgs(c.messages); }
+});
+
+document.getElementById('new-chat-btn-mobile')?.addEventListener('click', () => {
+  const id = createChat(t('new_chat'));
+  const c = chats.find(x => x.id === id);
+  if (c) { updateTitle(c.title); renderMsgs(c.messages); showChatScreen(); }
+});
+
+document.getElementById('attach-btn-mobile')?.addEventListener('click', () => {
+  toast('🖼️ Напиши "намалюй ..." для генерації зображення');
+});
 
 // ============================================================
-// 12. ЗАВАНТАЖЕННЯ
+// 15. ЗАВАНТАЖЕННЯ
 // ============================================================
-const savedLang = localStorage.getItem('coockie_interface_lang') || 'uk';
+const savedLang = localStorage.getItem('coockie_mobile_lang') || 'uk';
+currentLang = savedLang;
 document.getElementById('lang-select').value = savedLang;
-applyTranslations(savedLang);
-loadLocalChats();
-console.log('🍪 Coockie AI готовий');
+document.getElementById('lang-select-mobile').value = savedLang;
+applyTranslations();
+loadChats();
+
+// Показуємо правильний вигляд при завантаженні
+if (isMobile()) {
+  showChatListScreen();
+} else {
+  document.getElementById('sidebar').style.display = 'flex';
+}
+
+console.log('🍪 Coockie AI з анімацією готовий!');
 </script>
 </body>
 </html>
