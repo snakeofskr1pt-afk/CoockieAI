@@ -48,12 +48,6 @@
   #backup-buttons .import-btn input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
   #main { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg-main); }
-  #api-key-bar { padding: 5px 14px; background: #fef3c7; border-bottom: 0.5px solid #fcd34d; display: flex; align-items: center; gap: 6px; font-size: 11px; color: #92400e; flex-wrap: wrap; }
-  #api-key-bar.saved { background: #f0fdf4; border-color: #86efac; color: #166534; }
-  #api-key-bar input { flex: 1; min-width: 120px; padding: 3px 6px; border: 0.5px solid #fcd34d; border-radius: 5px; font-size: 11px; background: white; color: #1a1a18; outline: none; font-family: monospace; }
-  #api-key-bar input:focus { border-color: var(--brown); }
-  #api-key-bar button { padding: 3px 10px; background: var(--brown); color: white; border: none; border-radius: 5px; font-size: 11px; cursor: pointer; }
-  #api-key-bar a { color: inherit; font-weight: 500; font-size: 11px; }
   #topbar { padding: 8px 16px; border-bottom: 0.5px solid var(--border); display: flex; align-items: center; gap: 8px; }
   #topbar-title { font-size: 13px; font-weight: 500; color: var(--text); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -74,9 +68,6 @@
   .bubble { max-width: calc(100% - 70px); padding: 6px 12px; font-size: 13.5px; line-height: 1.6; color: var(--text); word-break: break-word; }
   .msg.ai .bubble { background: var(--bg-sidebar); border: 0.5px solid var(--border); border-radius: 4px 12px 12px 12px; }
   .msg.user .bubble { background: var(--brown); color: #fdf6ec; border-radius: 12px 4px 12px 12px; }
-
-  /* SEARCH INDICATOR */
-  .search-indicator { display: inline-block; font-size: 10px; padding: 1px 8px; background: #dbeafe; color: #1d4ed8; border-radius: 10px; margin-bottom: 4px; }
 
   .code-block { margin: 6px 0; border-radius: 6px; overflow: hidden; border: 0.5px solid var(--border-md); }
   .code-header { display: flex; align-items: center; justify-content: space-between; padding: 4px 10px; background: rgba(0,0,0,0.06); font-size: 10px; color: var(--text-muted); }
@@ -142,13 +133,6 @@
   </div>
 
   <div id="main">
-    <div id="api-key-bar">
-      <i class="ti ti-key" aria-hidden="true"></i>
-      <span>Groq API:</span>
-      <input type="password" id="api-key-input" placeholder="gsk_...">
-      <button id="save-key-btn">Зберегти</button>
-      <a href="https://console.groq.com/keys" target="_blank">Отримати →</a>
-    </div>
     <div id="topbar">
       <div id="topbar-title">Новий чат</div>
     </div>
@@ -165,7 +149,12 @@
 
 <script>
 // ============================================================
-// 1. ВИПРАВЛЕННЯ ІЄРОГЛІФІВ
+// 1. ВБУДОВАНИЙ API КЛЮЧ
+// ============================================================
+const apiKey = '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';
+
+// ============================================================
+// 2. ВИПРАВЛЕННЯ ІЄРОГЛІФІВ
 // ============================================================
 
 function fixBrokenUnicode(text) {
@@ -208,7 +197,7 @@ function sanitizeText(text) {
 }
 
 // ============================================================
-// 2. АВТОВИЗНАЧЕННЯ МОВИ
+// 3. АВТОВИЗНАЧЕННЯ МОВИ
 // ============================================================
 
 const WARNING_MESSAGES_UK = [
@@ -294,12 +283,11 @@ function getSystemPromptForLanguage(langCode) {
 }
 
 // ============================================================
-// 3. ПОШУК: DUCKDUCKGO + QWANT (резервний)
+// 4. ПОШУК: DUCKDUCKGO + QWANT
 // ============================================================
 
 const searchCache = new Map();
 
-// --- DuckDuckGo ---
 async function searchDuckDuckGo(query) {
   const cacheKey = 'ddg_' + query.toLowerCase().trim();
   if (searchCache.has(cacheKey)) {
@@ -326,7 +314,6 @@ async function searchDuckDuckGo(query) {
   } catch (e) { return []; }
 }
 
-// --- Qwant (резервний) ---
 async function searchQwant(query) {
   const cacheKey = 'qw_' + query.toLowerCase().trim();
   if (searchCache.has(cacheKey)) {
@@ -356,17 +343,12 @@ async function searchQwant(query) {
   }
 }
 
-// --- Основний пошук (DDG + Qwant) ---
 async function searchWeb(query) {
-  // Спочатку пробуємо DuckDuckGo
   let results = await searchDuckDuckGo(query);
   
-  // Якщо DDG нічого не знайшов або менше 3 результатів — пробуємо Qwant
   if (!results || results.length < 3) {
     console.log('🔄 DDG мало результатів, пробуємо Qwant...');
     const qwantResults = await searchQwant(query);
-    
-    // Об'єднуємо результати (уникаємо дублікатів за URL)
     const seen = new Set();
     const combined = [...results, ...qwantResults];
     const unique = combined.filter(r => {
@@ -378,7 +360,6 @@ async function searchWeb(query) {
     results = unique;
   }
   
-  // Логуємо джерело
   const source = results.length > 0 && results.some(r => r.url && !r.url.startsWith('#'));
   if (source) {
     console.log(`🔍 Знайдено ${results.length} результатів (DDG + Qwant)`);
@@ -387,7 +368,6 @@ async function searchWeb(query) {
   return results;
 }
 
-// --- Перевірка, чи потрібен пошук ---
 function needsInternetSearch(query) {
   const patterns = [
     /сьогодн/i, /зараз/i, /новин/i, /актуальн/i, /останн/i,
@@ -428,7 +408,7 @@ function needsInternetSearch(query) {
 }
 
 // ============================================================
-// 4. ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ (Pollinations.ai)
+// 5. ГЕНЕРАЦІЯ ЗОБРАЖЕНЬ
 // ============================================================
 function isImageRequest(query) {
   const patterns = [/намалюй/i,/згенеруй\s+(зображення|картинку|малюнок|фото)/i,/створи\s+(зображення|картинку|малюнок)/i,/зроби\s+(зображення|картинку|малюнок)/i,/покажи\s+як\s+виглядає/i,/generate\s+image/i,/draw\s+me/i,/малюнок\s+з/i,/картинка\s+з/i];
@@ -470,7 +450,7 @@ function addImageBubble(bubble, prompt) {
 }
 
 // ============================================================
-// 5. КОД
+// 6. КОД
 // ============================================================
 function renderCodeBlock(code, lang) {
   const id = 'cb_' + Math.random().toString(36).slice(2);
@@ -512,22 +492,6 @@ function runCode(id, code) {
   doc.open(); doc.write(code); doc.close();
   scrollBot();
 }
-
-// ============================================================
-// 6. API KEY
-// ============================================================
-let apiKey = localStorage.getItem('coockie_groq_key') || '';
-const apiKeyInput = document.getElementById('api-key-input');
-const apiBar = document.getElementById('api-key-bar');
-if (apiKey) { apiKeyInput.value = apiKey; apiBar.classList.add('saved'); }
-
-function saveKey() {
-  apiKey = apiKeyInput.value.trim();
-  localStorage.setItem('coockie_groq_key', apiKey);
-  if (apiKey) apiBar.classList.add('saved'); else apiBar.classList.remove('saved');
-  showToast('✅ Ключ збережено!');
-}
-document.getElementById('save-key-btn').onclick = saveKey;
 
 // ============================================================
 // 7. ОСНОВНА ЛОГІКА
@@ -662,7 +626,6 @@ function loadLocalChats() {
 async function send() {
   const text = textInput.value.trim();
   if (!text || loading) return;
-  if (!apiKey) { showToast('⚠️ Введи Groq API ключ!'); return; }
 
   const detectedLang = detectLanguage(text);
   const isRus = isRussian(text);
@@ -821,7 +784,7 @@ document.getElementById('new-chat-btn').onclick = () => { createChat('Новий
 
 loadLocalChats();
 console.log('🍪 Coockie AI готовий!');
-console.log('🔍 Пошук: DuckDuckGo + Qwant (резервний)');
+console.log('🔍 Пошук: DuckDuckGo + Qwant');
 console.log('🔧 Виправлення ієрогліфів — активовано');
 </script>
 </body>
